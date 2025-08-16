@@ -45,7 +45,7 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
     
     switch (format) {
       case 'currency':
-        return `$${val.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        return `$${val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
       case 'percentage':
         return `${(val * 100).toFixed(1)}%`;
       default:
