@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, TrendingUp, Lightbulb, Target } from 'lucide-react';
+import { Brain, TrendingUp, Lightbulb, Target, Search } from 'lucide-react';
 import { metricInsights, MetricInsights } from '@/data/aiInsights';
 
 interface MetricAIInsightsProps {
@@ -62,45 +62,52 @@ export const MetricAIInsights: React.FC<MetricAIInsightsProps> = ({
       </div>
 
       <div className="space-y-5">
-        {/* What Happened */}
+        {/* Over Time */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-accent" />
-            <h4 className="text-sm font-semibold text-foreground">What Happened</h4>
+            <h4 className="text-sm font-semibold text-foreground">Over Time</h4>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {insights.whatHappened}
+            {insights.overTime}
           </p>
         </div>
 
-        {/* Why It Happened */}
+        {/* High Impact Factors */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-accent" />
-            <h4 className="text-sm font-semibold text-foreground">Why It Happened</h4>
+            <Search className="h-4 w-4 text-accent" />
+            <h4 className="text-sm font-semibold text-foreground">High Impact Factors</h4>
           </div>
           <ul className="space-y-2">
-            {insights.whyItHappened.map((reason, index) => (
+            {insights.highImpactFactors.map((factor, index) => (
               <li key={index} className="text-sm text-muted-foreground flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                <span className="flex-1">{reason}</span>
+                <span className="flex-1">{factor}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* What To Do Next */}
+        {/* Key Recommendations */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-accent" />
-            <h4 className="text-sm font-semibold text-foreground">What To Do Next</h4>
+            <h4 className="text-sm font-semibold text-foreground">Key Recommendations</h4>
           </div>
           <div className="p-4 rounded-lg bg-gradient-to-r from-accent/5 to-purple-500/5 border border-accent/20">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {insights.whatToDoNext}
+              {insights.keyRecommendations}
             </p>
           </div>
         </div>
+
+        {/* Contextual Note */}
+        {insights.contextualNote && (
+          <div className="pt-2 border-t border-border/40">
+            <p className="text-xs text-muted-foreground italic">{insights.contextualNote}</p>
+          </div>
+        )}
       </div>
     </div>
   );
