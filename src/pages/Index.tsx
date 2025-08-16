@@ -258,6 +258,7 @@ const Index = () => {
                 value: mockSendKPIs.delta_prev.total_emails_sent_pct,
                 isPositive: mockSendKPIs.delta_prev.total_emails_sent_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Campaign Sends"
@@ -267,6 +268,7 @@ const Index = () => {
                 value: mockSendKPIs.delta_prev.campaign_sends_pct,
                 isPositive: mockSendKPIs.delta_prev.campaign_sends_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Total Active Profiles"
@@ -276,6 +278,7 @@ const Index = () => {
                 value: mockListGrowthKPIs.delta_prev.total_active_profiles_pct,
                 isPositive: mockListGrowthKPIs.delta_prev.total_active_profiles_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Net Subscriber Growth"
@@ -285,6 +288,7 @@ const Index = () => {
                 value: mockListGrowthKPIs.delta_prev.net_growth_pct,
                 isPositive: mockListGrowthKPIs.delta_prev.net_growth_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
@@ -296,6 +300,7 @@ const Index = () => {
                 value: mockListGrowthKPIs.delta_prev.new_subscribers_email_pct,
                 isPositive: mockListGrowthKPIs.delta_prev.new_subscribers_email_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="New SMS Subscribers"
@@ -305,6 +310,7 @@ const Index = () => {
                 value: mockListGrowthKPIs.delta_prev.new_subscribers_sms_pct,
                 isPositive: mockListGrowthKPIs.delta_prev.new_subscribers_sms_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Email Unsubscribes"
@@ -315,6 +321,7 @@ const Index = () => {
                 isPositive: mockListGrowthKPIs.delta_prev.unsubscribers_email_pct > 0
               } : undefined}
               isBadMetric={true}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="% Engaged (30d)"
@@ -324,6 +331,7 @@ const Index = () => {
                 value: mockListGrowthKPIs.delta_prev.engaged_pct_30d_pct,
                 isPositive: mockListGrowthKPIs.delta_prev.engaged_pct_30d_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
           </div>
         </section>
@@ -390,6 +398,7 @@ const Index = () => {
                 isPositive: mockSubscriptionKPIs.delta_prev.churn_pct_pct > 0
               } : undefined}
               isBadMetric={true}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Reactivation Rate"
@@ -399,6 +408,7 @@ const Index = () => {
                 value: mockSubscriptionKPIs.delta_prev.reactivation_pct_pct,
                 isPositive: mockSubscriptionKPIs.delta_prev.reactivation_pct_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Dunning Success Rate"
@@ -408,6 +418,7 @@ const Index = () => {
                 value: mockSubscriptionKPIs.delta_prev.dunning_success_pct_pct,
                 isPositive: mockSubscriptionKPIs.delta_prev.dunning_success_pct_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Skip Rate"
@@ -418,6 +429,16 @@ const Index = () => {
                 isPositive: mockSubscriptionKPIs.delta_prev.skip_rate_pct_pct > 0
               } : undefined}
               isBadMetric={true}
+              onCardClick={handleMetricClick}
+            />
+            <KPICard
+              title="Avg Time to Cancel"
+              value={`${mockSubscriptionKPIs.cards.avg_time_to_cancel_days} days`}
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.avg_time_to_cancel_days_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.avg_time_to_cancel_days_pct > 0
+              } : undefined}
+              onCardClick={handleMetricClick}
             />
           </div>
           <SubscriptionTable products={mockSubscriptionKPIs.by_product} />

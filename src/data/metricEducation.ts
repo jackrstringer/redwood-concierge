@@ -249,5 +249,11 @@ export const metricEducation: Record<string, MetricEducation> = {
     calculation: "Sum of active email and SMS subscribers who have engaged recently.",
     importance: "Active profiles represent your reachable audience and revenue potential.",
     benchmark: "Active profiles should grow consistently with your marketing efforts and customer acquisition."
+  },
+  "Flow Placed Order Rate": {
+    definition: "The percentage of flow email recipients who placed an order after receiving an automated email.",
+    calculation: "(Number of Flow Recipients Who Placed Orders ÷ Total Flow Recipients) × 100",
+    importance: "Shows how effectively your automated email sequences drive purchasing behavior beyond just engagement metrics.",
+    benchmark: "Flow placed order rates are typically 2-6% higher than campaign rates due to behavioral targeting."
   }
 };

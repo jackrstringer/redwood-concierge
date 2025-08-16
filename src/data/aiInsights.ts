@@ -353,5 +353,13 @@ export const metricInsights: Record<string, MetricInsights> = {
       "Re-engagement flows reactivating previously dormant subscribers"
     ],
     keyRecommendations: "Scale TikTok strategy to Instagram Reels and implement behavioral scoring to identify engagement risk early."
+  },
+  "Flow Placed Order Rate": {
+    overTime: "Flow placed order rate improved to 2.7% (+0.5%) since optimizing automated sequences and implementing behavioral triggers.",
+    highImpactFactors: [
+      "Welcome series optimization increasing new customer conversion by 28%",
+      "Abandoned cart recovery flow capturing 18% more orders on mobile devices"
+    ],
+    keyRecommendations: "Expand flow strategy to SMS channel and implement browse abandonment flow for holiday shoppers."
   }
 };
