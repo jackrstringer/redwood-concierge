@@ -102,6 +102,8 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
                   onChange={(e) => setFlagNotes(e.target.value)}
                   rows={3}
                   className="resize-none glass-input"
+                  autoFocus={false}
+                  data-no-autofocus="true"
                 />
                 <p className="text-xs text-muted-foreground">
                   {flagNotes.length}/500 characters
