@@ -8,6 +8,7 @@ export const mockToplineKPIs = {
   },
   cards: {
     total_revenue: 1197345.28,
+    email_revenue: 842110.42,
     email_revenue_split: { email: 842110.42, other: 355234.86 },
     campaign_revenue: 512345.67,
     flow_revenue: 329764.75,
@@ -18,6 +19,7 @@ export const mockToplineKPIs = {
   },
   delta_prev: { 
     total_revenue_pct: -0.10,
+    email_revenue_pct: 0.08,
     campaign_revenue_pct: 0.15,
     flow_revenue_pct: 0.08,
     rpr_pct: 0.12,

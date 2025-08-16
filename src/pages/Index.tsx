@@ -50,15 +50,25 @@ const Index = () => {
       <div className="p-6 space-y-8">
         {/* Top Line Revenue */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Top Line Revenue</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Core Revenue Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <KPICard
-              title="Total Revenue"
+              title="Total Ecom Revenue"
               value={mockToplineKPIs.cards.total_revenue}
               format="currency"
               delta={compareEnabled ? {
                 value: mockToplineKPIs.delta_prev.total_revenue_pct,
                 isPositive: mockToplineKPIs.delta_prev.total_revenue_pct > 0
+              } : undefined}
+              sparkline={generateSparklineData()}
+            />
+            <KPICard
+              title="Email Revenue"
+              value={mockToplineKPIs.cards.email_revenue}
+              format="currency"
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.email_revenue_pct,
+                isPositive: mockToplineKPIs.delta_prev.email_revenue_pct > 0
               } : undefined}
               sparkline={generateSparklineData()}
             />
@@ -70,6 +80,7 @@ const Index = () => {
                 value: mockToplineKPIs.delta_prev.campaign_revenue_pct,
                 isPositive: mockToplineKPIs.delta_prev.campaign_revenue_pct > 0
               } : undefined}
+              subtitle={`${((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue`}
               sparkline={generateSparklineData()}
             />
             <KPICard
@@ -80,6 +91,7 @@ const Index = () => {
                 value: mockToplineKPIs.delta_prev.flow_revenue_pct,
                 isPositive: mockToplineKPIs.delta_prev.flow_revenue_pct > 0
               } : undefined}
+              subtitle={`${((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue`}
               sparkline={generateSparklineData()}
             />
             <KPICard
@@ -92,7 +104,12 @@ const Index = () => {
               sparkline={generateSparklineData()}
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        </section>
+
+        {/* Secondary KPIs */}
+        <section>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Performance Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard
               title="Campaign Placed Order Rate"
               value={mockToplineKPIs.cards.campaign_placed_order_rate}
@@ -121,7 +138,7 @@ const Index = () => {
               } : undefined}
             />
             <KPICard
-              title="Email vs All Revenue"
+              title="Email Revenue Share"
               value={`${((mockToplineKPIs.cards.email_revenue_split.email / mockToplineKPIs.cards.total_revenue) * 100).toFixed(1)}%`}
               delta={compareEnabled ? {
                 value: mockToplineKPIs.delta_prev.email_revenue_split_pct,

@@ -12,6 +12,7 @@ interface KPICardProps {
   format?: 'currency' | 'percentage' | 'number';
   sparkline?: number[];
   className?: string;
+  subtitle?: string; // For showing sub-percentages
 }
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -20,7 +21,8 @@ export const KPICard: React.FC<KPICardProps> = ({
   delta,
   format = 'number',
   sparkline,
-  className = ''
+  className = '',
+  subtitle
 }) => {
   const formatValue = (val: string | number) => {
     if (typeof val === 'string') return val;
@@ -45,9 +47,16 @@ export const KPICard: React.FC<KPICardProps> = ({
       <div className="space-y-2">
         <p className="metric-label">{title}</p>
         <div className="flex items-end justify-between">
-          <p className="metric-value dashboard-text">
-            {formatValue(value)}
-          </p>
+          <div className="flex flex-col">
+            <p className="metric-value dashboard-text">
+              {formatValue(value)}
+            </p>
+            {subtitle && (
+              <p className="text-xs dashboard-text-muted mt-1">
+                {subtitle}
+              </p>
+            )}
+          </div>
           {delta && (
             <div className={`flex items-center gap-1 text-sm font-medium ${
               delta.isPositive ? 'delta-positive' : 'delta-negative'
