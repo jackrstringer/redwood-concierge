@@ -46,15 +46,15 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
       title: "🚀 Review Request Submitted!",
       description: "Your Redwood specialist has been notified and will respond in your shared channel within minutes. You're in great hands!",
       duration: 6000,
-      className: "border-green-500/30 bg-card text-card-foreground shadow-2xl backdrop-blur-sm",
+      className: "border-border bg-card text-card-foreground shadow-2xl backdrop-blur-sm",
       style: {
         position: 'fixed',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 9999,
-        maxWidth: '400px',
-        width: '90vw'
+        maxWidth: '320px',
+        width: '85vw'
       }
     });
     
@@ -67,7 +67,7 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="glass-modal max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="glass-modal max-w-2xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <h2 className="text-xl font-semibold text-foreground mb-4">Metric Review</h2>
         </DialogHeader>
