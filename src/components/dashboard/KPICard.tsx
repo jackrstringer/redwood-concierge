@@ -80,7 +80,7 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
         <p className="metric-label">{title}</p>
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col min-w-0 flex-1">
-            <p className="metric-value dashboard-text truncate">
+            <p className="metric-value dashboard-text leading-tight break-all">
               {formatValue(value)}
             </p>
             {subtitle && (
@@ -90,7 +90,7 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
             )}
           </div>
           {delta && (
-            <div className={`flex items-center text-xs font-medium whitespace-nowrap flex-shrink-0 ${
+            <div className={`flex items-start text-xs font-medium whitespace-nowrap flex-shrink-0 mt-1 ${
               delta.isPositive ? 'delta-positive' : 'delta-negative'
             }`}>
               <span className="tabular-nums">

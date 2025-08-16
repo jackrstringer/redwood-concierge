@@ -112,7 +112,7 @@ All colors MUST be HSL.
   }
 
   .metric-value {
-    @apply text-2xl font-semibold tabular-nums;
+    @apply text-lg sm:text-xl lg:text-2xl font-semibold tabular-nums;
   }
 
   .metric-label {
