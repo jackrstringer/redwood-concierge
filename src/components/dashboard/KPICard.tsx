@@ -11,7 +11,7 @@ interface KPICardProps {
   format?: 'currency' | 'percentage' | 'number';
   sparkline?: number[];
   className?: string;
-  subtitle?: string; // For showing sub-percentages
+  subtitle?: string | React.ReactNode; // For showing sub-percentages
   isHighPerformance?: boolean; // For subtle performance indicators
 }
 

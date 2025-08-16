@@ -96,7 +96,12 @@ const Index = () => {
                 value: mockToplineKPIs.delta_prev.campaign_revenue_pct,
                 isPositive: mockToplineKPIs.delta_prev.campaign_revenue_pct > 0
               } : undefined}
-              subtitle={`${((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue`}
+              subtitle={
+                <>
+                  <span className="sm:hidden">{((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email</span>
+                  <span className="hidden sm:inline">{((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue</span>
+                </>
+              }
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}
             />
@@ -108,7 +113,12 @@ const Index = () => {
                 value: mockToplineKPIs.delta_prev.flow_revenue_pct,
                 isPositive: mockToplineKPIs.delta_prev.flow_revenue_pct > 0
               } : undefined}
-              subtitle={`${((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue`}
+              subtitle={
+                <>
+                  <span className="sm:hidden">{((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email</span>
+                  <span className="hidden sm:inline">{((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue</span>
+                </>
+              }
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}
             />
