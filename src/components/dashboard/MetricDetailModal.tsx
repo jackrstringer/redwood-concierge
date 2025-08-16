@@ -116,16 +116,6 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
                 </p>
               </div>
 
-              <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <Send className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Instant notification:</strong> Your Redwood specialist will be immediately notified 
-                    and will respond in your shared agency channel within minutes.
-                  </p>
-                </div>
-              </div>
-
               <Button
                 onClick={handleFlagSubmit}
                 disabled={isSubmitting}
