@@ -50,7 +50,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold dashboard-text">
-              Redwood Analytics
+              Redwood Concierge
             </h1>
             <p className="text-sm dashboard-text-muted">Account Overview</p>
           </div>
