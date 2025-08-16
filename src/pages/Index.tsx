@@ -41,17 +41,17 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen dashboard-bg">
+    <div className="min-h-screen dashboard-bg mobile-optimized">
       <DashboardHeader 
         onDateRangeChange={handleDateRangeChange}
         onCompareToggle={handleCompareToggle}
       />
       
-      <div className="p-6 space-y-8">
+      <div className="p-3 sm:p-6 space-y-6 sm:space-y-8">
         {/* Top Line Revenue */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Core Revenue Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Core Revenue Metrics</h2>
+          <div className="grid-responsive-main">
             <KPICard
               title="Total Ecom Revenue"
               value={mockToplineKPIs.cards.total_revenue}
@@ -108,8 +108,8 @@ const Index = () => {
 
         {/* Secondary KPIs */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Performance Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Performance Metrics</h2>
+          <div className="grid-responsive-cards">
             <KPICard
               title="Campaign Placed Order Rate"
               value={mockToplineKPIs.cards.campaign_placed_order_rate}
@@ -150,8 +150,8 @@ const Index = () => {
 
         {/* Email KPIs */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Email Performance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Email Performance</h2>
+          <div className="grid-responsive-cards">
             <KPICard
               title="Open Rate"
               value={mockEmailKPIs.open_rate}
@@ -202,8 +202,8 @@ const Index = () => {
 
         {/* Send Volume & List Growth */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Send Volume & List Growth</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Send Volume & List Growth</h2>
+          <div className="grid-responsive-cards">
             <KPICard
               title="Total Emails Sent"
               value={mockSendKPIs.total_emails_sent}
@@ -241,7 +241,7 @@ const Index = () => {
               } : undefined}
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div className="grid-responsive-cards mt-3 sm:mt-4">
             <KPICard
               title="New Email Subscribers"
               value={mockListGrowthKPIs.new_subscribers.email}
@@ -283,8 +283,8 @@ const Index = () => {
 
         {/* Subscription Insights */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Recharge Subscription Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Recharge Subscription Insights</h2>
+          <div className="grid-responsive-cards mb-4 sm:mb-6">
             <KPICard
               title="Subscriptions Started"
               value={mockSubscriptionKPIs.cards.subs_started}
@@ -321,7 +321,7 @@ const Index = () => {
               } : undefined}
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid-responsive-cards mb-4 sm:mb-6">
             <KPICard
               title="Churn Rate"
               value={mockSubscriptionKPIs.cards.churn_pct}
