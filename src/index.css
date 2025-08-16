@@ -161,67 +161,46 @@ All colors MUST be HSL.
   /* Responsive grid utilities */
   .grid-responsive-cards {
     @apply grid gap-3 sm:gap-4;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
 
+  /* Zoom-based grid classes */
+  .zoom-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .zoom-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .zoom-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .zoom-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .zoom-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  /* Mobile defaults */
   @media (max-width: 640px) {
-    .grid-responsive-cards {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (min-width: 641px) and (max-width: 768px) {
-    .grid-responsive-cards {
+    .grid-responsive-cards.zoom-3,
+    .grid-responsive-cards.zoom-4,
+    .grid-responsive-cards.zoom-5 {
       grid-template-columns: repeat(2, 1fr);
     }
-  }
-
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .grid-responsive-cards {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  @media (min-width: 1025px) {
-    .grid-responsive-cards {
-      grid-template-columns: repeat(4, 1fr);
+    
+    .grid-responsive-main.zoom-4,
+    .grid-responsive-main.zoom-5 {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
   /* Special 5-column grid for main KPIs */
   .grid-responsive-main {
     @apply grid gap-3 sm:gap-4;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  @media (max-width: 640px) {
-    .grid-responsive-main {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (min-width: 641px) and (max-width: 768px) {
-    .grid-responsive-main {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .grid-responsive-main {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  @media (min-width: 1025px) and (max-width: 1280px) {
-    .grid-responsive-main {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-
-  @media (min-width: 1281px) {
-    .grid-responsive-main {
-      grid-template-columns: repeat(5, 1fr);
-    }
   }
 
   /* Hide elements on smaller screens */
