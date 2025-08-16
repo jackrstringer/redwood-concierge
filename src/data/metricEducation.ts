@@ -255,5 +255,35 @@ export const metricEducation: Record<string, MetricEducation> = {
     calculation: "(Number of Flow Recipients Who Placed Orders ÷ Total Flow Recipients) × 100",
     importance: "Shows how effectively your automated email sequences drive purchasing behavior beyond just engagement metrics.",
     benchmark: "Flow placed order rates are typically 2-6% higher than campaign rates due to behavioral targeting."
+  },
+  "AOV": {
+    definition: "The average dollar amount spent per order from email recipients.",
+    calculation: "Total Email Revenue ÷ Number of Orders from Email",
+    importance: "AOV helps you understand customer spending patterns and optimize for higher-value transactions.",
+    benchmark: "AOV should ideally increase over time as you better segment and target customers."
+  },
+  "RPR": {
+    definition: "The average amount of revenue generated per email recipient.",
+    calculation: "Total Email Revenue ÷ Total Email Recipients",
+    importance: "RPR helps you understand the true value of your email list and optimize for high-value segments.",
+    benchmark: "RPR varies by industry but $0.50-$2.00 per recipient is common for e-commerce."
+  },
+  "Campaign Rev": {
+    definition: "Revenue generated specifically from one-time email campaigns (not including automated flows).",
+    calculation: "Revenue from orders attributed to campaign emails within the attribution window.",
+    importance: "Campaigns drive immediate revenue and are essential for product launches, promotions, and seasonal sales.",
+    benchmark: "Campaign revenue should make up 40-60% of total email revenue."
+  },
+  "Flow Rev": {
+    definition: "Revenue generated from automated email sequences triggered by customer behavior.",
+    calculation: "Revenue from orders attributed to flow emails like welcome series, abandoned cart, and post-purchase sequences.",
+    importance: "Flows provide consistent, automated revenue generation and often have higher conversion rates than campaigns.",
+    benchmark: "Flow revenue should represent 40-60% of total email revenue."
+  },
+  "Campaigns Sent": {
+    definition: "The number of individual email campaigns sent during the time period.",
+    calculation: "Count of distinct campaign sends (not including flow emails).",
+    importance: "Tracking campaign frequency helps optimize sending cadence and prevent subscriber fatigue.",
+    benchmark: "1-3 campaigns per week is typical, depending on your industry and audience preferences."
   }
 };

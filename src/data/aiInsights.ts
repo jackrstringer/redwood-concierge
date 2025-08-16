@@ -361,5 +361,37 @@ export const metricInsights: Record<string, MetricInsights> = {
       "Abandoned cart recovery flow capturing 18% more orders on mobile devices"
     ],
     keyRecommendations: "Expand flow strategy to SMS channel and implement browse abandonment flow for holiday shoppers."
-  }
+  },
+  "AOV": {
+    overTime: "AOV from email increased 16% to $78 since launching bundling strategy and upsell flows from your 11/10 merchandising meeting.",
+    highImpactFactors: [
+      "Winter Bundle products driving 34% higher AOV compared to individual product purchases",
+      "Post-purchase upsell emails converting 12% of customers to additional purchases"
+    ],
+    keyRecommendations: "Expand bundle strategy to SMS channel and implement the subscription upsell flow your team designed for one-time buyers."
+  },
+  "RPR": {
+    overTime: "RPR improved 12% to $1.32 since implementing behavioral segmentation and send time optimization from your October engagement analysis.",
+    highImpactFactors: [
+      "VIP segment (identified in retention reports) generating 3.2x higher RPR than average subscribers",
+      "Send time optimization hitting peak engagement windows increased RPR by 18%"
+    ],
+    keyRecommendations: "Scale VIP segment strategy and implement the purchase prediction model to send targeted offers to highest-value prospects."
+  },
+  "Campaign Rev": {
+    overTime: "Campaign revenue grew 25% to $15K driven by increased frequency and your Black Friday promotional calendar from the 11/1 planning session.",
+    highImpactFactors: [
+      "Daily campaign sends during Black Friday week generated 40% of monthly campaign revenue",
+      "Product bundling strategy in campaigns increasing average order values by 31%"
+    ],
+    keyRecommendations: "Implement automated campaign scheduler your tech team proposed and prepare post-holiday re-engagement campaigns for January slowdown."
+  },
+  "Flow Rev": {
+    overTime: "Flow revenue increased 15% to $19K after optimizing your welcome series and abandoned cart sequences based on October's retention analysis.",
+    highImpactFactors: [
+      "New 3-email welcome series converting 28% higher than previous single email",
+      "Mobile-optimized abandoned cart flow recovering 18% more revenue on mobile devices"
+    ],
+    keyRecommendations: "Expand flow strategy to SMS and implement the browse abandonment flow your team designed for holiday shoppers."
+  },
 };
