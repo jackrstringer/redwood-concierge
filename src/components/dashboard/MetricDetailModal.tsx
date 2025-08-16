@@ -96,38 +96,20 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
                 <Flag className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Redwood Specialist Review</h3>
-                <p className="text-sm text-muted-foreground">Direct access to your dedicated email marketing expert</p>
+                <h3 className="text-lg font-semibold text-foreground">Flag for Review?</h3>
+                <p className="text-sm text-muted-foreground">Submit a review request to automatically flag this metric for review in our shared channel, and notify your Redwood Account Specialist.</p>
               </div>
             </div>
 
             {!showFlagForm && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-semibold text-primary">RS</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground mb-1">
-                        Like having an Amex Black Card for email marketing
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Get immediate access to a Redwood specialist who will analyze this metric and provide 
-                        personalized recommendations directly in your agency channel.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => setShowFlagForm(true)}
-                  className="w-full glass-submit-button"
-                  size="lg"
-                >
-                  <Flag className="h-4 w-4 mr-2" />
-                  Request Specialist Review
-                </Button>
-              </div>
+              <Button
+                onClick={() => setShowFlagForm(true)}
+                className="w-full glass-submit-button"
+                size="lg"
+              >
+                <Flag className="h-4 w-4 mr-2" />
+                Request Specialist Review
+              </Button>
             )}
 
             {showFlagForm && (
