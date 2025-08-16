@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface KPICardProps {
@@ -79,26 +78,21 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
     >
       <div className="space-y-2">
         <p className="metric-label">{title}</p>
-        <div className="flex items-end justify-between">
-          <div className="flex flex-col">
-            <p className="metric-value dashboard-text">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col min-w-0 flex-1">
+            <p className="metric-value dashboard-text truncate">
               {formatValue(value)}
             </p>
             {subtitle && (
-              <p className="text-xs dashboard-text-muted mt-1">
+              <p className="text-xs dashboard-text-muted mt-1 truncate">
                 {subtitle}
               </p>
             )}
           </div>
           {delta && (
-            <div className={`flex items-center gap-1 text-xs font-medium ${
+            <div className={`flex items-center text-xs font-medium whitespace-nowrap flex-shrink-0 ${
               delta.isPositive ? 'delta-positive' : 'delta-negative'
             }`}>
-              {delta.isPositive ? (
-                <ChevronUp className="h-3 w-3" />
-              ) : (
-                <ChevronDown className="h-3 w-3" />
-              )}
               <span className="tabular-nums">
                 {formatDelta(delta.value)}
               </span>
