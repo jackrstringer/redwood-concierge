@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { KPICard } from '@/components/dashboard/KPICard';
+import { MetricDetailModal } from '@/components/dashboard/MetricDetailModal';
 import { CampaignsTable } from '@/components/dashboard/CampaignsTable';
 import { SubscriptionTable } from '@/components/dashboard/SubscriptionTable';
 import {
@@ -17,6 +18,8 @@ const Index = () => {
   const [selectedDateRange, setSelectedDateRange] = useState('last_30_days');
   const [compareEnabled, setCompareEnabled] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -36,6 +39,16 @@ const Index = () => {
     console.log('Compare mode:', enabled);
   };
 
+  const handleMetricClick = (metric: any) => {
+    setSelectedMetric(metric);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedMetric(null);
+  };
+
   if (!mounted) {
     return <div className="min-h-screen dashboard-bg" />;
   }
@@ -53,7 +66,7 @@ const Index = () => {
           <h2 className="text-xl font-semibold dashboard-text mb-4">Core Revenue Metrics</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <KPICard
-              title="Total Ecom Revenue"
+              title="Total Revenue"
               value={mockToplineKPIs.cards.total_revenue}
               format="currency"
               delta={compareEnabled ? {
@@ -62,6 +75,7 @@ const Index = () => {
               } : undefined}
               sparkline={generateSparklineData()}
               isHighPerformance={mockToplineKPIs.delta_prev.total_revenue_pct > 0.1}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Email Revenue"
@@ -72,6 +86,7 @@ const Index = () => {
                 isPositive: mockToplineKPIs.delta_prev.email_revenue_pct > 0
               } : undefined}
               sparkline={generateSparklineData()}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Campaign Revenue"
@@ -83,6 +98,7 @@ const Index = () => {
               } : undefined}
               subtitle={`${((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue`}
               sparkline={generateSparklineData()}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Flow Revenue"
@@ -94,15 +110,17 @@ const Index = () => {
               } : undefined}
               subtitle={`${((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue`}
               sparkline={generateSparklineData()}
+              onCardClick={handleMetricClick}
             />
             <KPICard
-              title="Revenue per Recipient"
+              title="Revenue per Recipient (RPR)"
               value={`$${mockToplineKPIs.cards.rpr.toFixed(2)}`}
               delta={compareEnabled ? {
                 value: mockToplineKPIs.delta_prev.rpr_pct,
                 isPositive: mockToplineKPIs.delta_prev.rpr_pct > 0
               } : undefined}
               sparkline={generateSparklineData()}
+              onCardClick={handleMetricClick}
             />
           </div>
         </section>
@@ -112,13 +130,14 @@ const Index = () => {
           <h2 className="text-xl font-semibold dashboard-text mb-4">Performance Metrics</h2>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <KPICard
-              title="Campaign Placed Order Rate"
+              title="Placed Order Rate"
               value={mockToplineKPIs.cards.campaign_placed_order_rate}
               format="percentage"
               delta={compareEnabled ? {
                 value: mockToplineKPIs.delta_prev.campaign_placed_order_rate_pct,
                 isPositive: mockToplineKPIs.delta_prev.campaign_placed_order_rate_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Flow Placed Order Rate"
@@ -128,15 +147,17 @@ const Index = () => {
                 value: mockToplineKPIs.delta_prev.flow_placed_order_rate_pct,
                 isPositive: mockToplineKPIs.delta_prev.flow_placed_order_rate_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
-              title="Average Order Value"
+              title="Average Order Value (AOV)"
               value={mockToplineKPIs.cards.aov}
               format="currency"
               delta={compareEnabled ? {
                 value: mockToplineKPIs.delta_prev.aov_pct,
                 isPositive: mockToplineKPIs.delta_prev.aov_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Email Revenue Share"
@@ -145,6 +166,7 @@ const Index = () => {
                 value: mockToplineKPIs.delta_prev.email_revenue_split_pct,
                 isPositive: mockToplineKPIs.delta_prev.email_revenue_split_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
           </div>
         </section>
@@ -162,6 +184,7 @@ const Index = () => {
                 isPositive: mockEmailKPIs.delta_prev.open_rate_pct > 0
               } : undefined}
               isHighPerformance={mockEmailKPIs.open_rate > 0.25}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Click Rate"
@@ -172,6 +195,7 @@ const Index = () => {
                 isPositive: mockEmailKPIs.delta_prev.click_rate_pct > 0
               } : undefined}
               isHighPerformance={mockEmailKPIs.click_rate > 0.05}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Unsubscribe Rate"
@@ -181,15 +205,17 @@ const Index = () => {
                 value: mockEmailKPIs.delta_prev.unsubscribe_rate_pct,
                 isPositive: mockEmailKPIs.delta_prev.unsubscribe_rate_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
-              title="Spam Complaint Rate"
+              title="Spam Rate"
               value={mockEmailKPIs.spam_rate}
               format="percentage"
               delta={compareEnabled ? {
                 value: mockEmailKPIs.delta_prev.spam_rate_pct,
                 isPositive: mockEmailKPIs.delta_prev.spam_rate_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Bounce Rate"
@@ -199,6 +225,7 @@ const Index = () => {
                 value: mockEmailKPIs.delta_prev.bounce_rate_pct,
                 isPositive: mockEmailKPIs.delta_prev.bounce_rate_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
           </div>
         </section>
@@ -284,6 +311,13 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Metric Detail Modal */}
+        <MetricDetailModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          metric={selectedMetric}
+        />
+
         {/* Subscription Insights */}
         <section>
           <h2 className="text-xl font-semibold dashboard-text mb-4">Recharge Subscription Insights</h2>
@@ -296,6 +330,7 @@ const Index = () => {
                 value: mockSubscriptionKPIs.delta_prev.subs_started_pct,
                 isPositive: mockSubscriptionKPIs.delta_prev.subs_started_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Active Subscriptions"
@@ -305,6 +340,7 @@ const Index = () => {
                 value: mockSubscriptionKPIs.delta_prev.subs_active_pct,
                 isPositive: mockSubscriptionKPIs.delta_prev.subs_active_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
               title="Average Subscription Cycles"
@@ -313,15 +349,17 @@ const Index = () => {
                 value: mockSubscriptionKPIs.delta_prev.avg_cycles_pct,
                 isPositive: mockSubscriptionKPIs.delta_prev.avg_cycles_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
             <KPICard
-              title="Monthly Recurring Revenue"
+              title="Monthly Recurring Revenue (MRR)"
               value={mockSubscriptionKPIs.cards.mrr}
               format="currency"
               delta={compareEnabled ? {
                 value: mockSubscriptionKPIs.delta_prev.mrr_pct,
                 isPositive: mockSubscriptionKPIs.delta_prev.mrr_pct > 0
               } : undefined}
+              onCardClick={handleMetricClick}
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">

@@ -16,7 +16,21 @@ interface KPICardProps {
   isHighPerformance?: boolean; // For subtle performance indicators
 }
 
-export const KPICard: React.FC<KPICardProps> = ({
+interface KPICardClickHandler {
+  onCardClick?: (metric: {
+    title: string;
+    value: string | number;
+    delta?: {
+      value: number;
+      isPositive: boolean;
+    };
+    format?: 'currency' | 'percentage' | 'number';
+    sparkline?: number[];
+    isHighPerformance?: boolean;
+  }) => void;
+}
+
+export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
   title,
   value,
   delta,
@@ -24,7 +38,8 @@ export const KPICard: React.FC<KPICardProps> = ({
   sparkline,
   className = '',
   subtitle,
-  isHighPerformance = false
+  isHighPerformance = false,
+  onCardClick
 }) => {
   const formatValue = (val: string | number) => {
     if (typeof val === 'string') return val;
@@ -44,8 +59,24 @@ export const KPICard: React.FC<KPICardProps> = ({
     return `${sign}${(deltaValue * 100).toFixed(1)}%`;
   };
 
+  const handleCardClick = () => {
+    if (onCardClick) {
+      onCardClick({
+        title,
+        value,
+        delta,
+        format,
+        sparkline,
+        isHighPerformance
+      });
+    }
+  };
+
   return (
-    <Card className={`dashboard-card p-4 hover-lift relative overflow-hidden ${isHighPerformance ? 'performance-highlight' : ''} ${className}`}>
+    <Card 
+      className={`dashboard-card p-4 hover-lift relative overflow-hidden ${isHighPerformance ? 'performance-highlight' : ''} ${onCardClick ? 'cursor-pointer kpi-card-clickable' : ''} ${className}`}
+      onClick={handleCardClick}
+    >
       <div className="space-y-2">
         <p className="metric-label">{title}</p>
         <div className="flex items-end justify-between">

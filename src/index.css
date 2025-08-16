@@ -155,4 +155,38 @@ All colors MUST be HSL.
     background: linear-gradient(180deg, transparent 0%, hsl(var(--dashboard-success) / 0.06) 100%);
     border: 1px solid hsl(var(--dashboard-success) / 0.12);
   }
+
+  /* Clickable KPI Cards */
+  .kpi-card-clickable {
+    @apply transition-all duration-200;
+  }
+  
+  .kpi-card-clickable:hover {
+    @apply scale-[1.02] shadow-lg;
+  }
+
+  /* Glass Morphism Components */
+  .glass-modal {
+    @apply bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl;
+  }
+
+  .glass-panel {
+    @apply bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg;
+  }
+
+  .glass-button {
+    @apply bg-background/50 backdrop-blur-sm border border-border/50 hover:bg-background/70 transition-all duration-200;
+  }
+
+  .glass-input {
+    @apply bg-background/50 backdrop-blur-sm border border-border/50 focus:bg-background/70 transition-all duration-200;
+  }
+
+  .glass-submit-button {
+    @apply bg-primary/90 backdrop-blur-sm hover:bg-primary border border-primary/50 text-primary-foreground shadow-lg transition-all duration-200;
+  }
+
+  .glass-submit-button:hover {
+    @apply shadow-xl scale-[1.02];
+  }
 }
