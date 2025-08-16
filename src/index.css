@@ -87,10 +87,6 @@ All colors MUST be HSL.
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     font-feature-settings: 'tnum' 1; /* Enable tabular numbers */
     letter-spacing: -0.01em; /* Tighter letter spacing for modern look */
-    /* Improve mobile performance */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
   }
 
   .dashboard-bg {
@@ -140,79 +136,5 @@ All colors MUST be HSL.
 
   .dark .hover-lift:hover {
     box-shadow: 0 25px 50px -12px rgb(255 255 255 / 0.1);
-  }
-
-  /* Mobile optimizations */
-  .mobile-optimized {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-  }
-
-  /* Responsive typography */
-  .metric-value {
-    @apply text-xl sm:text-2xl font-semibold tabular-nums;
-  }
-
-  .metric-label {
-    @apply text-xs font-medium dashboard-text-muted uppercase tracking-wide;
-  }
-
-  /* Responsive grid utilities */
-  .grid-responsive-cards {
-    @apply grid gap-3 sm:gap-4;
-  }
-
-  /* Zoom-based grid classes */
-  .zoom-1 {
-    grid-template-columns: 1fr;
-  }
-
-  .zoom-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .zoom-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .zoom-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .zoom-5 {
-    grid-template-columns: repeat(5, 1fr);
-  }
-
-  /* Mobile defaults */
-  @media (max-width: 640px) {
-    .grid-responsive-cards.zoom-3,
-    .grid-responsive-cards.zoom-4,
-    .grid-responsive-cards.zoom-5 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .grid-responsive-main.zoom-4,
-    .grid-responsive-main.zoom-5 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  /* Special 5-column grid for main KPIs */
-  .grid-responsive-main {
-    @apply grid gap-3 sm:gap-4;
-  }
-
-  /* Hide elements on smaller screens */
-  .hide-on-mobile {
-    @apply hidden sm:block;
-  }
-
-  .hide-on-tablet {
-    @apply hidden lg:block;
-  }
-
-  .show-on-mobile {
-    @apply block sm:hidden;
   }
 }

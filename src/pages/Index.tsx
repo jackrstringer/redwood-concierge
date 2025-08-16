@@ -17,7 +17,6 @@ const Index = () => {
   const [selectedDateRange, setSelectedDateRange] = useState('last_30_days');
   const [compareEnabled, setCompareEnabled] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(2); // Default to 2 cards wide on mobile
 
   useEffect(() => {
     setMounted(true);
@@ -37,33 +36,22 @@ const Index = () => {
     console.log('Compare mode:', enabled);
   };
 
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 1, 5));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 1, 1));
-  };
-
   if (!mounted) {
     return <div className="min-h-screen dashboard-bg" />;
   }
 
   return (
-    <div className="min-h-screen dashboard-bg mobile-optimized">
+    <div className="min-h-screen dashboard-bg">
       <DashboardHeader 
         onDateRangeChange={handleDateRangeChange}
         onCompareToggle={handleCompareToggle}
-        zoomLevel={zoomLevel}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
       />
       
-      <div className="p-3 sm:p-6 space-y-6 sm:space-y-8">
+      <div className="p-6 space-y-8">
         {/* Top Line Revenue */}
         <section>
-          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Core Revenue Metrics</h2>
-          <div className={`grid-responsive-main zoom-${zoomLevel >= 4 ? 5 : zoomLevel === 3 ? 4 : zoomLevel === 2 ? 3 : zoomLevel === 1 ? 2 : 5}`}>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Core Revenue Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <KPICard
               title="Total Ecom Revenue"
               value={mockToplineKPIs.cards.total_revenue}
@@ -120,8 +108,8 @@ const Index = () => {
 
         {/* Secondary KPIs */}
         <section>
-          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Performance Metrics</h2>
-          <div className={`grid-responsive-cards zoom-${zoomLevel}`}>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Performance Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard
               title="Campaign Placed Order Rate"
               value={mockToplineKPIs.cards.campaign_placed_order_rate}
@@ -162,8 +150,8 @@ const Index = () => {
 
         {/* Email KPIs */}
         <section>
-          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Email Performance</h2>
-          <div className={`grid-responsive-cards zoom-${zoomLevel}`}>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Email Performance</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <KPICard
               title="Open Rate"
               value={mockEmailKPIs.open_rate}
@@ -214,8 +202,8 @@ const Index = () => {
 
         {/* Send Volume & List Growth */}
         <section>
-          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Send Volume & List Growth</h2>
-          <div className={`grid-responsive-cards zoom-${zoomLevel}`}>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Send Volume & List Growth</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard
               title="Total Emails Sent"
               value={mockSendKPIs.total_emails_sent}
@@ -253,7 +241,7 @@ const Index = () => {
               } : undefined}
             />
           </div>
-          <div className={`grid-responsive-cards zoom-${zoomLevel} mt-3 sm:mt-4`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <KPICard
               title="New Email Subscribers"
               value={mockListGrowthKPIs.new_subscribers.email}
@@ -295,8 +283,8 @@ const Index = () => {
 
         {/* Subscription Insights */}
         <section>
-          <h2 className="text-lg sm:text-xl font-semibold dashboard-text mb-3 sm:mb-4">Recharge Subscription Insights</h2>
-          <div className={`grid-responsive-cards zoom-${zoomLevel} mb-4 sm:mb-6`}>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Recharge Subscription Insights</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KPICard
               title="Subscriptions Started"
               value={mockSubscriptionKPIs.cards.subs_started}
@@ -333,7 +321,7 @@ const Index = () => {
               } : undefined}
             />
           </div>
-          <div className={`grid-responsive-cards zoom-${zoomLevel} mb-4 sm:mb-6`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KPICard
               title="Churn Rate"
               value={mockSubscriptionKPIs.cards.churn_pct}
