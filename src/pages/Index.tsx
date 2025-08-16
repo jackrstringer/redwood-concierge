@@ -64,10 +64,8 @@ const Index = () => {
       <div className="p-4 sm:p-6 space-y-8 max-w-full overflow-x-hidden">
         {/* Core Revenue Metrics */}
         <section>
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold dashboard-text">Core Revenue Metrics</h2>
-            <SectionInsights sectionName="Core Revenue Metrics" />
-          </div>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Core Revenue Metrics</h2>
+          <SectionInsights sectionName="Core Revenue Metrics" />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             <KPICard
               title="Total Revenue"
@@ -149,10 +147,8 @@ const Index = () => {
 
         {/* Performance Metrics */}
         <section>
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold dashboard-text">Performance Metrics</h2>
-            <SectionInsights sectionName="Performance Metrics" />
-          </div>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Performance Metrics</h2>
+          <SectionInsights sectionName="Performance Metrics" />
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <KPICard
               title="Placed Order Rate"
@@ -251,10 +247,8 @@ const Index = () => {
 
         {/* Send Volume & List Growth */}
         <section>
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold dashboard-text">Send Volume & List Growth</h2>
-            <SectionInsights sectionName="Send Volume Metrics" />
-          </div>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Send Volume & List Growth</h2>
+          <SectionInsights sectionName="Send Volume Metrics" />
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <KPICard
               title="Total Emails Sent"
@@ -343,10 +337,8 @@ const Index = () => {
 
         {/* Subscription Insights */}
         <section>
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold dashboard-text">Recharge Subscription Insights</h2>
-            <SectionInsights sectionName="Subscription Metrics" />
-          </div>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">Recharge Subscription Insights</h2>
+          <SectionInsights sectionName="Subscription Metrics" />
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <KPICard
               title="Subscriptions Started"
