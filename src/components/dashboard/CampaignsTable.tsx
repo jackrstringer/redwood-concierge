@@ -95,143 +95,134 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => 
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b dashboard-border">
-                <th className="text-left p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+            <thead className="sticky top-0 bg-card z-10">
+              <tr className="border-b border-border">
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[120px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('sent_at')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
-                    Sent Date
+                    Sent
                     <SortIcon field="sent_at" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-left p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[200px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('name')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
-                    Campaign Name
+                    Name
                     <SortIcon field="name" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[100px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('recipients')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
                     Recipients
                     <SortIcon field="recipients" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[80px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('open_rate')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
-                    Open Rate
+                    Open%
                     <SortIcon field="open_rate" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[80px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('click_rate')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
-                    Click Rate
+                    Click%
                     <SortIcon field="click_rate" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[80px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('placed_orders')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
                     Orders
                     <SortIcon field="placed_orders" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[100px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('revenue')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
                     Revenue
                     <SortIcon field="revenue" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[60px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('rpr')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
                     RPR
                     <SortIcon field="rpr" />
-                  </Button>
+                  </button>
                 </th>
-                <th className="text-right p-3 dashboard-text-muted text-xs font-medium uppercase tracking-wide">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[60px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     onClick={() => handleSort('aov')}
-                    className="h-auto p-0 dashboard-text-muted hover:dashboard-text gap-1"
                   >
                     AOV
                     <SortIcon field="aov" />
-                  </Button>
+                  </button>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredAndSortedCampaigns.map((campaign, index) => (
-                <tr
-                  key={campaign.id}
-                  className={`border-b dashboard-border hover:bg-muted/30 transition-colors ${
-                    index % 2 === 0 ? 'bg-muted/10' : ''
-                  }`}
+              {filteredAndSortedCampaigns.map((campaign) => (
+                <tr 
+                  key={campaign.id} 
+                  className="border-b border-border hover:bg-muted/50 transition-colors"
                 >
-                  <td className="p-3 dashboard-text text-sm">
+                  <td className="p-3 text-sm text-foreground font-medium tabular-nums">
                     {formatDate(campaign.sent_at)}
                   </td>
-                  <td className="p-3 dashboard-text text-sm font-medium">
+                  <td className="p-3 text-sm text-foreground font-medium">
                     {campaign.name}
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
-                    {campaign.recipients.toLocaleString()}
+                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                    {campaign.recipients >= 1000 
+                      ? `${(campaign.recipients / 1000).toFixed(0)}k`
+                      : campaign.recipients.toLocaleString()
+                    }
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
+                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
                     {formatPercentage(campaign.open_rate)}
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
+                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
                     {formatPercentage(campaign.click_rate)}
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
-                    {campaign.placed_orders.toLocaleString()}
+                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                    {campaign.placed_orders >= 1000 
+                      ? `${(campaign.placed_orders / 1000).toFixed(1)}k`
+                      : campaign.placed_orders.toLocaleString()
+                    }
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
-                    {formatCurrency(campaign.revenue)}
+                  <td className="p-3 text-sm text-muted-foreground font-medium tabular-nums">
+                    ${campaign.revenue >= 1000000 
+                      ? `${(campaign.revenue / 1000000).toFixed(1)}M`
+                      : campaign.revenue >= 1000
+                      ? `${(campaign.revenue / 1000).toFixed(0)}k`
+                      : campaign.revenue.toFixed(0)
+                    }
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
-                    {campaign.rpr.toFixed(2)}
+                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                    ${campaign.rpr.toFixed(2)}
                   </td>
-                  <td className="p-3 dashboard-text text-sm text-right tabular-nums">
-                    {formatCurrency(campaign.aov)}
+                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                    ${campaign.aov.toFixed(0)}
                   </td>
                 </tr>
               ))}

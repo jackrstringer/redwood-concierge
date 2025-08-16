@@ -68,7 +68,16 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="glass-modal max-w-2xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <DialogHeader>
+        <DialogHeader className="relative">
+          <button
+            onClick={onClose}
+            className="absolute -top-2 -right-2 p-3 hover:bg-muted/50 rounded-full transition-colors"
+            aria-label="Close modal"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
           <h2 className="text-xl font-semibold text-foreground mb-4">Metric Review</h2>
         </DialogHeader>
 

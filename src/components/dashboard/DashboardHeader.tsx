@@ -45,7 +45,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   )?.label || 'Last 30 days';
 
   return (
-    <div className="dashboard-card border-b dashboard-border sticky top-0 z-10 overflow-x-hidden">
+    <div className="dashboard-card border-b dashboard-border sticky top-0 z-10 overflow-x-hidden backdrop-blur-lg bg-background/90">
       <div className="px-4 sm:px-6 py-4 max-w-full">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div>

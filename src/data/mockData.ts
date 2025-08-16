@@ -48,9 +48,11 @@ export const mockEmailKPIs = {
 export const mockSendKPIs = {
   total_emails_sent: 612345,
   campaign_sends: 442110,
+  campaigns_sent: 28,
   delta_prev: {
     total_emails_sent_pct: 0.18,
-    campaign_sends_pct: 0.22
+    campaign_sends_pct: 0.22,
+    campaigns_sent_pct: 0.15
   }
 };
 

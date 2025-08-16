@@ -13,6 +13,7 @@ interface KPICardProps {
   className?: string;
   subtitle?: string | React.ReactNode; // For showing sub-percentages
   isHighPerformance?: boolean; // For subtle performance indicators
+  isBadMetric?: boolean; // For metrics where down is good (unsubs, spam, bounces)
 }
 
 interface KPICardClickHandler {
@@ -26,6 +27,7 @@ interface KPICardClickHandler {
     format?: 'currency' | 'percentage' | 'number';
     sparkline?: number[];
     isHighPerformance?: boolean;
+    isBadMetric?: boolean;
   }) => void;
 }
 
@@ -38,6 +40,7 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
   className = '',
   subtitle,
   isHighPerformance = false,
+  isBadMetric = false,
   onCardClick
 }) => {
   const formatValue = (val: string | number) => {
@@ -45,10 +48,20 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
     
     switch (format) {
       case 'currency':
-        return `$${val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        if (val >= 1000000) {
+          return `$${(val / 1000000).toFixed(val >= 10000000 ? 1 : 2)}M`;
+        } else if (val >= 1000) {
+          return `$${(val / 1000).toFixed(val >= 100000 ? 0 : 1)}k`;
+        }
+        return `$${val.toFixed(2)}`;
       case 'percentage':
         return `${(val * 100).toFixed(1)}%`;
       default:
+        if (val >= 1000000) {
+          return `${(val / 1000000).toFixed(1)}M`;
+        } else if (val >= 1000) {
+          return `${(val / 1000).toFixed(0)}k`;
+        }
         return val.toLocaleString('en-US');
     }
   };
@@ -66,7 +79,8 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
         delta,
         format,
         sparkline,
-        isHighPerformance
+        isHighPerformance,
+        isBadMetric
       });
     }
   };
@@ -80,18 +94,20 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
         <p className="metric-label">{title}</p>
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col min-w-0 flex-1">
-            <p className="metric-value dashboard-text leading-tight break-all">
+            <p className="metric-value dashboard-text leading-tight break-all tabular-nums">
               {formatValue(value)}
             </p>
             {subtitle && (
-              <p className="text-xs dashboard-text-muted mt-1 truncate">
+              <p className="text-xs dashboard-text-muted mt-1 truncate tabular-nums">
                 {subtitle}
               </p>
             )}
           </div>
           {delta && (
             <div className={`flex items-start text-xs font-medium whitespace-nowrap flex-shrink-0 mt-1 ${
-              delta.isPositive ? 'delta-positive' : 'delta-negative'
+              isBadMetric 
+                ? (delta.isPositive ? 'delta-negative' : 'delta-positive')
+                : (delta.isPositive ? 'delta-positive' : 'delta-negative')
             }`}>
               <span className="tabular-nums">
                 {formatDelta(delta.value)}
