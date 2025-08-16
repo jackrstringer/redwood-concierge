@@ -43,8 +43,10 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({
-      title: "Metric flagged for review",
-      description: "A Redwood specialist will review this metric and follow up in your shared agency channel.",
+      title: "🚀 Review Request Submitted!",
+      description: "Your Redwood specialist has been notified and will respond in your shared channel within minutes. You're in great hands!",
+      duration: 6000,
+      className: "border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800",
     });
     
     setIsSubmitting(false);
