@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { KPICard } from './KPICard';
+import { MetricAIInsights } from './MetricAIInsights';
 import { useToast } from '@/hooks/use-toast';
 import { metricEducation } from '@/data/metricEducation';
 
@@ -148,6 +149,9 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
               </Button>
             </div>
           </div>
+
+          {/* AI Insights Section */}
+          <MetricAIInsights metricTitle={metric.title} />
 
           {/* Educational Content - Compact */}
           {education && (
