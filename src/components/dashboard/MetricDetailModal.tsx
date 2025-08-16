@@ -46,7 +46,16 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
       title: "🚀 Review Request Submitted!",
       description: "Your Redwood specialist has been notified and will respond in your shared channel within minutes. You're in great hands!",
       duration: 6000,
-      className: "border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800",
+      className: "border-green-500/30 bg-card text-card-foreground shadow-2xl backdrop-blur-sm",
+      style: {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 9999,
+        maxWidth: '400px',
+        width: '90vw'
+      }
     });
     
     setIsSubmitting(false);
