@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface KPICardProps {
@@ -91,13 +91,13 @@ export const KPICard: React.FC<KPICardProps & KPICardClickHandler> = ({
             )}
           </div>
           {delta && (
-            <div className={`flex items-center gap-1 text-sm font-medium ${
+            <div className={`flex items-center gap-1 text-xs font-medium ${
               delta.isPositive ? 'delta-positive' : 'delta-negative'
             }`}>
               {delta.isPositive ? (
-                <TrendingUp className="h-3 w-3" />
+                <ChevronUp className="h-3 w-3" />
               ) : (
-                <TrendingDown className="h-3 w-3" />
+                <ChevronDown className="h-3 w-3" />
               )}
               <span className="tabular-nums">
                 {formatDelta(delta.value)}
