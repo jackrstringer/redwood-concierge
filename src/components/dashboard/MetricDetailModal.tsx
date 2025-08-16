@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Info, Flag, Send } from 'lucide-react';
+import { Info, Flag, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,17 +58,7 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="glass-modal max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Metric Review</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-white/10"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Metric Review</h2>
         </DialogHeader>
 
         <div className="space-y-6">
