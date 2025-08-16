@@ -61,7 +61,7 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
       <DialogContent className="glass-modal max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Metric Details</h2>
+            <h2 className="text-xl font-semibold text-foreground">Metric Review</h2>
             <Button
               variant="ghost"
               size="sm"
@@ -89,89 +89,65 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Educational Content */}
-          {education && (
-            <div className="glass-panel p-6 space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Info className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-medium text-foreground">Understanding This Metric</h3>
-              </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <h4 className="font-medium text-foreground mb-1">Definition</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {education.definition}
-                  </p>
-                </div>
-
-                {education.calculation && (
-                  <div>
-                    <h4 className="font-medium text-foreground mb-1">How It's Calculated</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {education.calculation}
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <h4 className="font-medium text-foreground mb-1">Why It Matters</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {education.importance}
-                  </p>
-                </div>
-
-                {education.benchmark && (
-                  <div>
-                    <h4 className="font-medium text-foreground mb-1">Industry Benchmark</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {education.benchmark}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Flag for Review Section */}
+          {/* Flag for Review Section - Primary Focus */}
           <div className="glass-panel p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Flag className="h-5 w-5 text-amber-500" />
-                <h3 className="text-lg font-medium text-foreground">Flag for Review</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Flag className="h-5 w-5 text-primary" />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFlagForm(!showFlagForm)}
-                className="glass-button"
-              >
-                {showFlagForm ? 'Cancel' : 'Request Review'}
-              </Button>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Redwood Specialist Review</h3>
+                <p className="text-sm text-muted-foreground">Direct access to your dedicated email marketing expert</p>
+              </div>
             </div>
 
             {!showFlagForm && (
-              <p className="text-sm text-muted-foreground">
-                Need help understanding this metric or see something unusual? 
-                A Redwood specialist can provide personalized insights.
-              </p>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-semibold text-primary">RS</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-1">
+                        Like having an Amex Black Card for email marketing
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Get immediate access to a Redwood specialist who will analyze this metric and provide 
+                        personalized recommendations directly in your agency channel.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowFlagForm(true)}
+                  className="w-full glass-submit-button"
+                  size="lg"
+                >
+                  <Flag className="h-4 w-4 mr-2" />
+                  Request Specialist Review
+                </Button>
+              </div>
             )}
 
             {showFlagForm && (
               <div className="space-y-4 animate-fade-in">
                 <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-lg p-4">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    A Redwood specialist will be notified and will reach out via your shared agency channel 
-                    with personalized insights about this metric.
-                  </p>
+                  <div className="flex items-start gap-2">
+                    <Send className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>Instant notification:</strong> Your Redwood specialist will be immediately notified 
+                      and will respond in your shared agency channel within minutes.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Additional Context (Optional)
+                    Additional Context <span className="text-xs text-muted-foreground">(Optional)</span>
                   </label>
                   <Textarea
-                    placeholder="Any specific questions or concerns about this metric?"
+                    placeholder="e.g., 'This seems unusually low compared to last month' or 'Need help optimizing this metric'"
                     value={flagNotes}
                     onChange={(e) => setFlagNotes(e.target.value)}
                     rows={3}
@@ -182,26 +158,52 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
                   </p>
                 </div>
 
-                <Button
-                  onClick={handleFlagSubmit}
-                  disabled={isSubmitting}
-                  className="glass-submit-button w-full"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Submit Review Request
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFlagForm(false)}
+                    className="flex-1 glass-button"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleFlagSubmit}
+                    disabled={isSubmitting}
+                    className="flex-1 glass-submit-button"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send to Specialist
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Educational Content - Compact */}
+          {education && (
+            <div className="glass-panel p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <h4 className="text-sm font-medium text-foreground">Quick Reference</h4>
+              </div>
+              
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p><strong>Definition:</strong> {education.definition}</p>
+                {education.benchmark && (
+                  <p><strong>Benchmark:</strong> {education.benchmark}</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
