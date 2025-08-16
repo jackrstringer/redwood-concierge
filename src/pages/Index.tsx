@@ -15,7 +15,7 @@ import {
 
 const Index = () => {
   const [selectedDateRange, setSelectedDateRange] = useState('last_30_days');
-  const [compareEnabled, setCompareEnabled] = useState(false);
+  const [compareEnabled, setCompareEnabled] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -61,6 +61,7 @@ const Index = () => {
                 isPositive: mockToplineKPIs.delta_prev.total_revenue_pct > 0
               } : undefined}
               sparkline={generateSparklineData()}
+              isHighPerformance={mockToplineKPIs.delta_prev.total_revenue_pct > 0.1}
             />
             <KPICard
               title="Email Revenue"
@@ -160,6 +161,7 @@ const Index = () => {
                 value: mockEmailKPIs.delta_prev.open_rate_pct,
                 isPositive: mockEmailKPIs.delta_prev.open_rate_pct > 0
               } : undefined}
+              isHighPerformance={mockEmailKPIs.open_rate > 0.25}
             />
             <KPICard
               title="Click Rate"
@@ -169,6 +171,7 @@ const Index = () => {
                 value: mockEmailKPIs.delta_prev.click_rate_pct,
                 isPositive: mockEmailKPIs.delta_prev.click_rate_pct > 0
               } : undefined}
+              isHighPerformance={mockEmailKPIs.click_rate > 0.05}
             />
             <KPICard
               title="Unsubscribe Rate"

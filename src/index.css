@@ -139,4 +139,20 @@ All colors MUST be HSL.
   .dark .hover-lift:hover {
     box-shadow: 0 25px 50px -12px rgb(255 255 255 / 0.1);
   }
+
+  .performance-highlight {
+    @apply relative;
+  }
+
+  .performance-highlight::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg pointer-events-none;
+    background: linear-gradient(180deg, transparent 0%, hsl(var(--dashboard-success) / 0.08) 100%);
+    border: 1px solid hsl(var(--dashboard-success) / 0.15);
+  }
+
+  .dark .performance-highlight::before {
+    background: linear-gradient(180deg, transparent 0%, hsl(var(--dashboard-success) / 0.06) 100%);
+    border: 1px solid hsl(var(--dashboard-success) / 0.12);
+  }
 }

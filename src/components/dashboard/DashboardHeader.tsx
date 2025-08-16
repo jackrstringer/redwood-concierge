@@ -27,7 +27,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onCompareToggle
 }) => {
   const [selectedRange, setSelectedRange] = useState('last_30_days');
-  const [compareEnabled, setCompareEnabled] = useState(false);
+  const [compareEnabled, setCompareEnabled] = useState(true);
 
   const handleRangeChange = (range: string) => {
     setSelectedRange(range);
@@ -45,23 +45,26 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   )?.label || 'Last 30 days';
 
   return (
-    <div className="dashboard-card border-b dashboard-border sticky top-0 z-10">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold dashboard-text">
-            Account Overview
-          </h1>
+    <div className="dashboard-card border-b dashboard-border sticky top-0 z-10 overflow-x-hidden">
+      <div className="px-4 sm:px-6 py-4 max-w-full">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold dashboard-text">
+              Redwood Analytics
+            </h1>
+            <p className="text-sm dashboard-text-muted">Account Overview</p>
+          </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="gap-2 dashboard-text border-dashboard-border bg-dashboard-card hover:bg-muted/50"
+                  className="gap-2 dashboard-text border-dashboard-border bg-dashboard-card hover:bg-muted/50 text-xs sm:text-sm w-full sm:w-auto"
                 >
-                  <Calendar className="h-4 w-4" />
-                  {selectedRangeLabel}
-                  <ChevronDown className="h-4 w-4" />
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="truncate">{selectedRangeLabel}</span>
+                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -85,19 +88,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <Button
               variant="ghost"
               onClick={handleCompareToggle}
-              className="gap-2 dashboard-text hover:bg-muted/50"
+              className="gap-2 dashboard-text hover:bg-muted/50 text-xs sm:text-sm w-full sm:w-auto justify-start sm:justify-center"
             >
               {compareEnabled ? (
-                <ToggleRight className="h-4 w-4 text-dashboard-accent" />
+                <ToggleRight className="h-3 w-3 sm:h-4 sm:w-4 text-dashboard-accent" />
               ) : (
-                <ToggleLeft className="h-4 w-4" />
+                <ToggleLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               )}
-              Compare to previous period
+              <span className="truncate">Compare to previous period</span>
             </Button>
           </div>
         </div>
         
-        <p className="mt-2 text-sm dashboard-text-muted">
+        <p className="mt-2 text-xs sm:text-sm dashboard-text-muted">
           Account timezone: UTC-8 (Pacific Standard Time)
         </p>
       </div>

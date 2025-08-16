@@ -13,6 +13,7 @@ interface KPICardProps {
   sparkline?: number[];
   className?: string;
   subtitle?: string; // For showing sub-percentages
+  isHighPerformance?: boolean; // For subtle performance indicators
 }
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -22,7 +23,8 @@ export const KPICard: React.FC<KPICardProps> = ({
   format = 'number',
   sparkline,
   className = '',
-  subtitle
+  subtitle,
+  isHighPerformance = false
 }) => {
   const formatValue = (val: string | number) => {
     if (typeof val === 'string') return val;
@@ -43,7 +45,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   };
 
   return (
-    <Card className={`dashboard-card p-4 hover-lift ${className}`}>
+    <Card className={`dashboard-card p-4 hover-lift relative overflow-hidden ${isHighPerformance ? 'performance-highlight' : ''} ${className}`}>
       <div className="space-y-2">
         <p className="metric-label">{title}</p>
         <div className="flex items-end justify-between">
