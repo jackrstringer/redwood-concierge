@@ -52,16 +52,26 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				dashboard: {
+					bg: 'hsl(var(--dashboard-bg))',
+					card: 'hsl(var(--dashboard-card))',
+					border: 'hsl(var(--dashboard-border))',
+					text: 'hsl(var(--dashboard-text))',
+					'text-muted': 'hsl(var(--dashboard-text-muted))',
+					accent: 'hsl(var(--dashboard-accent))',
+					success: 'hsl(var(--dashboard-success))',
+					warning: 'hsl(var(--dashboard-warning))',
+					danger: 'hsl(var(--dashboard-danger))'
 				}
+			},
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+			},
+			fontSize: {
+				'metric-sm': ['0.75rem', { lineHeight: '1rem' }],
+				'metric-base': ['0.875rem', { lineHeight: '1.25rem' }],
+				'metric-lg': ['1.5rem', { lineHeight: '2rem' }],
+				'metric-xl': ['1.75rem', { lineHeight: '2.25rem' }],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
