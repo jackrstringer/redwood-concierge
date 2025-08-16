@@ -16,7 +16,16 @@ export const mockToplineKPIs = {
     flow_placed_order_rate: 0.027,
     aov: 74.12
   },
-  delta_prev: { total_revenue_pct: -0.10 }
+  delta_prev: { 
+    total_revenue_pct: -0.10,
+    campaign_revenue_pct: 0.15,
+    flow_revenue_pct: 0.08,
+    rpr_pct: 0.12,
+    campaign_placed_order_rate_pct: -0.03,
+    flow_placed_order_rate_pct: 0.05,
+    aov_pct: 0.07,
+    email_revenue_split_pct: 0.02
+  }
 };
 
 export const mockEmailKPIs = {
@@ -24,12 +33,23 @@ export const mockEmailKPIs = {
   click_rate: 0.041,
   unsubscribe_rate: 0.0031,
   spam_rate: 0.0006,
-  bounce_rate: 0.0042
+  bounce_rate: 0.0042,
+  delta_prev: {
+    open_rate_pct: 0.04,
+    click_rate_pct: 0.02,
+    unsubscribe_rate_pct: -0.01,
+    spam_rate_pct: -0.02,
+    bounce_rate_pct: 0.01
+  }
 };
 
 export const mockSendKPIs = {
   total_emails_sent: 612345,
-  campaign_sends: 442110
+  campaign_sends: 442110,
+  delta_prev: {
+    total_emails_sent_pct: 0.18,
+    campaign_sends_pct: 0.22
+  }
 };
 
 export const mockListGrowthKPIs = {
@@ -37,7 +57,15 @@ export const mockListGrowthKPIs = {
   new_subscribers: { email: 27412, sms: 10433 },
   unsubscribers: { email: 8122, sms: 2280 },
   net_growth: 27443,
-  engaged_pct_30d: 0.41
+  engaged_pct_30d: 0.41,
+  delta_prev: {
+    total_active_profiles_pct: 0.09,
+    new_subscribers_email_pct: 0.14,
+    new_subscribers_sms_pct: 0.28,
+    unsubscribers_email_pct: -0.05,
+    net_growth_pct: 0.16,
+    engaged_pct_30d_pct: 0.03
+  }
 };
 
 export const mockSubscriptionKPIs = {
@@ -52,6 +80,17 @@ export const mockSubscriptionKPIs = {
     dunning_success_pct: 0.63,
     skip_rate_pct: 0.094,
     avg_time_to_cancel_days: 86
+  },
+  delta_prev: {
+    subs_started_pct: 0.24,
+    subs_active_pct: 0.11,
+    avg_cycles_pct: 0.06,
+    mrr_pct: 0.13,
+    churn_pct_pct: -0.08,
+    reactivation_pct_pct: 0.19,
+    dunning_success_pct_pct: 0.04,
+    skip_rate_pct_pct: -0.02,
+    avg_time_to_cancel_days_pct: 0.09
   },
   by_product: [
     { 

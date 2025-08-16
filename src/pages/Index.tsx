@@ -66,17 +66,29 @@ const Index = () => {
               title="Campaign Revenue"
               value={mockToplineKPIs.cards.campaign_revenue}
               format="currency"
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.campaign_revenue_pct,
+                isPositive: mockToplineKPIs.delta_prev.campaign_revenue_pct > 0
+              } : undefined}
               sparkline={generateSparklineData()}
             />
             <KPICard
               title="Flow Revenue"
               value={mockToplineKPIs.cards.flow_revenue}
               format="currency"
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.flow_revenue_pct,
+                isPositive: mockToplineKPIs.delta_prev.flow_revenue_pct > 0
+              } : undefined}
               sparkline={generateSparklineData()}
             />
             <KPICard
               title="Revenue per Recipient"
               value={`$${mockToplineKPIs.cards.rpr.toFixed(2)}`}
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.rpr_pct,
+                isPositive: mockToplineKPIs.delta_prev.rpr_pct > 0
+              } : undefined}
               sparkline={generateSparklineData()}
             />
           </div>
@@ -85,20 +97,36 @@ const Index = () => {
               title="Campaign Placed Order Rate"
               value={mockToplineKPIs.cards.campaign_placed_order_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.campaign_placed_order_rate_pct,
+                isPositive: mockToplineKPIs.delta_prev.campaign_placed_order_rate_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Flow Placed Order Rate"
               value={mockToplineKPIs.cards.flow_placed_order_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.flow_placed_order_rate_pct,
+                isPositive: mockToplineKPIs.delta_prev.flow_placed_order_rate_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Average Order Value"
               value={mockToplineKPIs.cards.aov}
               format="currency"
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.aov_pct,
+                isPositive: mockToplineKPIs.delta_prev.aov_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Email vs All Revenue"
               value={`${((mockToplineKPIs.cards.email_revenue_split.email / mockToplineKPIs.cards.total_revenue) * 100).toFixed(1)}%`}
+              delta={compareEnabled ? {
+                value: mockToplineKPIs.delta_prev.email_revenue_split_pct,
+                isPositive: mockToplineKPIs.delta_prev.email_revenue_split_pct > 0
+              } : undefined}
             />
           </div>
         </section>
@@ -111,26 +139,46 @@ const Index = () => {
               title="Open Rate"
               value={mockEmailKPIs.open_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockEmailKPIs.delta_prev.open_rate_pct,
+                isPositive: mockEmailKPIs.delta_prev.open_rate_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Click Rate"
               value={mockEmailKPIs.click_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockEmailKPIs.delta_prev.click_rate_pct,
+                isPositive: mockEmailKPIs.delta_prev.click_rate_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Unsubscribe Rate"
               value={mockEmailKPIs.unsubscribe_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockEmailKPIs.delta_prev.unsubscribe_rate_pct,
+                isPositive: mockEmailKPIs.delta_prev.unsubscribe_rate_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Spam Complaint Rate"
               value={mockEmailKPIs.spam_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockEmailKPIs.delta_prev.spam_rate_pct,
+                isPositive: mockEmailKPIs.delta_prev.spam_rate_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Bounce Rate"
               value={mockEmailKPIs.bounce_rate}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockEmailKPIs.delta_prev.bounce_rate_pct,
+                isPositive: mockEmailKPIs.delta_prev.bounce_rate_pct > 0
+              } : undefined}
             />
           </div>
         </section>
@@ -143,21 +191,37 @@ const Index = () => {
               title="Total Emails Sent"
               value={mockSendKPIs.total_emails_sent}
               format="number"
+              delta={compareEnabled ? {
+                value: mockSendKPIs.delta_prev.total_emails_sent_pct,
+                isPositive: mockSendKPIs.delta_prev.total_emails_sent_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Campaign Sends"
               value={mockSendKPIs.campaign_sends}
               format="number"
+              delta={compareEnabled ? {
+                value: mockSendKPIs.delta_prev.campaign_sends_pct,
+                isPositive: mockSendKPIs.delta_prev.campaign_sends_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Total Active Profiles"
               value={mockListGrowthKPIs.total_active_profiles}
               format="number"
+              delta={compareEnabled ? {
+                value: mockListGrowthKPIs.delta_prev.total_active_profiles_pct,
+                isPositive: mockListGrowthKPIs.delta_prev.total_active_profiles_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Net Subscriber Growth"
               value={mockListGrowthKPIs.net_growth}
               format="number"
+              delta={compareEnabled ? {
+                value: mockListGrowthKPIs.delta_prev.net_growth_pct,
+                isPositive: mockListGrowthKPIs.delta_prev.net_growth_pct > 0
+              } : undefined}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
@@ -165,21 +229,37 @@ const Index = () => {
               title="New Email Subscribers"
               value={mockListGrowthKPIs.new_subscribers.email}
               format="number"
+              delta={compareEnabled ? {
+                value: mockListGrowthKPIs.delta_prev.new_subscribers_email_pct,
+                isPositive: mockListGrowthKPIs.delta_prev.new_subscribers_email_pct > 0
+              } : undefined}
             />
             <KPICard
               title="New SMS Subscribers"
               value={mockListGrowthKPIs.new_subscribers.sms}
               format="number"
+              delta={compareEnabled ? {
+                value: mockListGrowthKPIs.delta_prev.new_subscribers_sms_pct,
+                isPositive: mockListGrowthKPIs.delta_prev.new_subscribers_sms_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Email Unsubscribes"
               value={mockListGrowthKPIs.unsubscribers.email}
               format="number"
+              delta={compareEnabled ? {
+                value: mockListGrowthKPIs.delta_prev.unsubscribers_email_pct,
+                isPositive: mockListGrowthKPIs.delta_prev.unsubscribers_email_pct > 0
+              } : undefined}
             />
             <KPICard
               title="% Engaged (30d)"
               value={mockListGrowthKPIs.engaged_pct_30d}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockListGrowthKPIs.delta_prev.engaged_pct_30d_pct,
+                isPositive: mockListGrowthKPIs.delta_prev.engaged_pct_30d_pct > 0
+              } : undefined}
             />
           </div>
         </section>
@@ -192,20 +272,36 @@ const Index = () => {
               title="Subscriptions Started"
               value={mockSubscriptionKPIs.cards.subs_started}
               format="number"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.subs_started_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.subs_started_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Active Subscriptions"
               value={mockSubscriptionKPIs.cards.subs_active}
               format="number"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.subs_active_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.subs_active_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Average Subscription Cycles"
               value={mockSubscriptionKPIs.cards.avg_cycles.toFixed(1)}
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.avg_cycles_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.avg_cycles_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Monthly Recurring Revenue"
               value={mockSubscriptionKPIs.cards.mrr}
               format="currency"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.mrr_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.mrr_pct > 0
+              } : undefined}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -213,21 +309,37 @@ const Index = () => {
               title="Churn Rate"
               value={mockSubscriptionKPIs.cards.churn_pct}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.churn_pct_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.churn_pct_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Reactivation Rate"
               value={mockSubscriptionKPIs.cards.reactivation_pct}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.reactivation_pct_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.reactivation_pct_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Dunning Success Rate"
               value={mockSubscriptionKPIs.cards.dunning_success_pct}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.dunning_success_pct_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.dunning_success_pct_pct > 0
+              } : undefined}
             />
             <KPICard
               title="Skip Rate"
               value={mockSubscriptionKPIs.cards.skip_rate_pct}
               format="percentage"
+              delta={compareEnabled ? {
+                value: mockSubscriptionKPIs.delta_prev.skip_rate_pct_pct,
+                isPositive: mockSubscriptionKPIs.delta_prev.skip_rate_pct_pct > 0
+              } : undefined}
             />
           </div>
           <SubscriptionTable products={mockSubscriptionKPIs.by_product} />
