@@ -147,44 +147,44 @@ export const metricInsights: Record<string, MetricInsights> = {
     keyRecommendations: "Launch subscriber preference center your UX team designed and implement engagement-based frequency caps from retention strategy."
   },
   "Spam Rate": {
-    overTime: "Spam rate maintained at 0.05% despite increased frequency, indicating strong sender reputation and content quality.",
+    overTime: "Spam rate maintained at 0.05% despite increased send frequency, indicating strong sender reputation and email deliverability health.",
     highImpactFactors: [
-      "Consistent list hygiene practices keeping engagement rates high",
-      "Send time optimization and personalization improving subscriber satisfaction"
+      "Consistent list hygiene practices removing inactive subscribers maintaining high engagement",
+      "Subject line personalization and send time optimization improving subscriber satisfaction and reducing complaints"
     ],
-    keyRecommendations: "Continue current practices and implement the engagement scoring system to identify at-risk subscribers before they report spam."
+    keyRecommendations: "Continue current deliverability practices and implement engagement scoring system to identify at-risk subscribers before they report spam."
   },
   "Bounce Rate": {
-    overTime: "Bounce rate decreased to 1.2% after implementing the automated list cleaning process your team set up in October.",
+    overTime: "Bounce rate decreased to 1.2% after implementing automated list cleaning process, improving overall email deliverability performance.",
     highImpactFactors: [
-      "Weekly automated removal of hard bounces preventing reputation damage",
-      "Email validation on signup forms catching invalid addresses before they enter your list"
+      "Weekly automated removal of hard bounces preventing sender reputation damage",
+      "Email validation on signup forms catching 23% of invalid addresses before list entry"
     ],
-    keyRecommendations: "Implement the real-time email validation API your dev team proposed and set up suppression list syncing with SMS platform."
+    keyRecommendations: "Implement real-time email validation API your dev team proposed and set up suppression list syncing across all email platforms."
   },
   "Total Emails Sent": {
-    overTime: "Total sends increased 35% to 847K emails after scaling to 5x weekly frequency and launching daily Black Friday campaigns.",
+    overTime: "Total send volume increased 35% to 612K emails after scaling to 5x weekly frequency and launching daily Black Friday campaigns.",
     highImpactFactors: [
-      "Frequency increase from 3x to 5x weekly adding 280K additional sends monthly",
-      "Black Friday daily campaigns contributing extra 150K sends during peak week"
+      "Frequency increase from 3x to 5x weekly adding 180K additional sends monthly",
+      "Black Friday daily campaign strategy contributing extra 120K sends during peak week"
     ],
-    keyRecommendations: "Implement automated send scheduling to maintain volume while preventing subscriber fatigue through smart frequency caps."
+    keyRecommendations: "Implement automated send scheduling to maintain volume efficiency while preventing subscriber fatigue through smart frequency caps."
   },
   "Campaign Sends": {
-    overTime: "Campaign sends grew 50% to 425K following your Q4 content calendar and daily Black Friday promotional strategy.",
+    overTime: "Campaign send volume grew 50% to 442K following your Q4 content calendar and daily Black Friday promotional strategy.",
     highImpactFactors: [
-      "Daily sends during Black Friday week generated 40% of monthly campaign volume",
-      "A/B testing send times requiring duplicate campaigns for optimal timing"
+      "Daily sends during Black Friday week accounting for 30% of monthly campaign volume",
+      "A/B testing optimal send times requiring duplicate campaigns for timing optimization"
     ],
-    keyRecommendations: "Implement automated campaign scheduler and prepare reduced-frequency post-holiday strategy to prevent list fatigue."
+    keyRecommendations: "Implement automated campaign scheduler and prepare reduced-frequency post-holiday strategy to prevent list fatigue in January."
   },
   "Campaigns Sent": {
-    overTime: "Campaign count increased 40% to 42 campaigns following your aggressive Q4 promotional calendar from the 10/20 strategy session.",
+    overTime: "Campaign count increased 40% to 28 campaigns following your aggressive Q4 promotional calendar from the 10/20 strategy session.",
     highImpactFactors: [
-      "Daily campaign requirement during Black Friday week adding 7 extra campaigns",
-      "A/B testing different segments requiring multiple campaign versions"
+      "Daily campaign requirement during Black Friday week adding 7 extra campaigns to monthly total",
+      "Product launch sequence requiring multiple campaign touchpoints for maximum reach"
     ],
-    keyRecommendations: "Prepare post-holiday engagement recovery campaigns and implement the automated scheduler to optimize future campaign timing."
+    keyRecommendations: "Prepare post-holiday engagement recovery campaign series and implement automated scheduler to optimize future campaign timing."
   },
   "Active Profiles": {
     overTime: "Active profiles grew 8% to 47K after implementing the re-engagement campaign series your team launched in October.",
