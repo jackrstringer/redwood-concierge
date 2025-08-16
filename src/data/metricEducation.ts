@@ -200,5 +200,54 @@ export const metricEducation: Record<string, MetricEducation> = {
     calculation: "Sum of (Cancellation Date - Start Date) ÷ Number of Cancelled Subscriptions",
     importance: "Longer time to cancel indicates better customer onboarding and product satisfaction.",
     benchmark: "Varies by billing frequency and product type, but 90+ days is generally positive for monthly subscriptions."
+  },
+
+  "Email Rev Share": {
+    definition: "The percentage of total revenue that comes from email marketing efforts.",
+    calculation: "Email Revenue ÷ Total Revenue × 100",
+    importance: "This shows how much your business depends on email marketing and helps justify email marketing investments.",
+    benchmark: "20-40% email revenue share is typical for e-commerce businesses with mature email programs."
+  },
+
+  "New Email Subscribers": {
+    definition: "The number of new email addresses that subscribed during the time period.",
+    calculation: "Count of new email opt-ins through all subscription sources (website, social, campaigns, etc.)",
+    importance: "Email subscriber growth is essential for long-term email marketing success and revenue growth.",
+    benchmark: "Aim for 5-10% list growth per month, though this varies greatly by business model."
+  },
+
+  "New SMS Subscribers": {
+    definition: "The number of new phone numbers that opted in to SMS marketing during the time period.",
+    calculation: "Count of new SMS opt-ins through all subscription sources.",
+    importance: "SMS has higher engagement rates than email and provides an additional revenue channel.",
+    benchmark: "SMS growth of 10-20% of email growth is typical for businesses with active SMS programs."
+  },
+
+  "Email Unsubscribes": {
+    definition: "The number of email subscribers who opted out during the time period.",
+    calculation: "Count of unsubscribe actions from email communications.",
+    importance: "Natural email churn is expected, but spikes indicate potential content or frequency issues.",
+    benchmark: "Monthly email churn of 2-5% is normal, but monitor for sudden increases."
+  },
+
+  "% Engaged (30d)": {
+    definition: "The percentage of subscribers who opened or clicked an email in the last 30 days.",
+    calculation: "Engaged Subscribers (30d) ÷ Total Active Subscribers × 100",
+    importance: "High engagement rates improve deliverability and indicate strong content-audience fit.",
+    benchmark: "40-60% engagement rate indicates a healthy, engaged email list."
+  },
+
+  "Net Subscriber Growth": {
+    definition: "The net change in email list size after accounting for new subscribers and unsubscribes.",
+    calculation: "New Email Subscribers - Email Unsubscribers",
+    importance: "Net growth shows the true health of your list building efforts and retention strategies.",
+    benchmark: "Positive net growth is ideal, with 3-8% monthly growth being excellent."
+  },
+
+  "Total Active Profiles": {
+    definition: "The total number of email and SMS subscribers who are currently subscribed and engaged.",
+    calculation: "Sum of active email and SMS subscribers who have engaged recently.",
+    importance: "Active profiles represent your reachable audience and revenue potential.",
+    benchmark: "Active profiles should grow consistently with your marketing efforts and customer acquisition."
   }
 };

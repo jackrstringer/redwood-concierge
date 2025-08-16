@@ -297,5 +297,61 @@ export const metricInsights: Record<string, MetricInsights> = {
       "Proactive customer success check-ins at day 30, 60, and 90 preventing early churn"
     ],
     keyRecommendations: "Implement loyalty rewards at 6-month milestone and expand customer success program to include product education workshops."
+  },
+  "Email Rev Share": {
+    overTime: "Email's share of total revenue increased to 38% (+6%) since implementing advanced segmentation and behavioral triggers from your 11/8 optimization call.",
+    highImpactFactors: [
+      "Behavioral triggers in Klaviyo capturing 23% more post-purchase opportunities",
+      "Email subscribers showing 2.3x higher LTV than other acquisition channels"
+    ],
+    keyRecommendations: "Scale winning email templates to SMS to boost that channel from 12% revenue share and implement predictive segmentation model."
+  },
+  "New Email Subscribers": {
+    overTime: "Email subscriber growth accelerated 22% to 27,412 additions since launching TikTok lead magnet strategy from your 10/25 growth meeting.",
+    highImpactFactors: [
+      "Holiday Gift Guide lead magnet converting 40% higher than previous offers",
+      "Influencer partnership from last month's campaign driving organic sign-ups"
+    ],
+    keyRecommendations: "Double down on TikTok strategy and implement Instagram Reels version your social team proposed in yesterday's Slack discussion."
+  },
+  "New SMS Subscribers": {
+    overTime: "SMS subscriber growth increased 28% to 10,433 new subscribers after implementing SMS-specific lead magnets and cross-promotion in email.",
+    highImpactFactors: [
+      "SMS-exclusive discount offers in email campaigns driving 34% higher opt-in rates",
+      "Checkout SMS opt-in optimization increasing conversion by 18%"
+    ],
+    keyRecommendations: "Implement SMS preference center for frequency control and launch SMS-exclusive flash sales to boost engagement."
+  },
+  "Email Unsubscribes": {
+    overTime: "Email unsubscribes increased to 8,122 (+5% decrease in rate) since frequency optimization, with unsubscribes concentrated among low-value segments.",
+    highImpactFactors: [
+      "Frequency-sensitive subscribers leaving rather than adjusting preferences",
+      "Low-engagement segments showing higher churn but minimal revenue impact"
+    ],
+    keyRecommendations: "Launch preference center to give subscribers frequency control and implement win-back campaigns for high-value unsubscribes."
+  },
+  "% Engaged (30d)": {
+    overTime: "30-day engagement rate held steady at 41% despite increased frequency, showing strong content-audience fit from recent optimization efforts.",
+    highImpactFactors: [
+      "Behavioral segmentation keeping content highly relevant to subscriber interests",
+      "Send time optimization ensuring emails arrive when subscribers are most active"
+    ],
+    keyRecommendations: "Implement engagement-based frequency caps and expand successful segmentation strategies to SMS channel."
+  },
+  "Net Subscriber Growth": {
+    overTime: "Net growth improved to 27,443 subscribers (+16%) driven by strong acquisition from TikTok strategy outpacing frequency-related churn.",
+    highImpactFactors: [
+      "TikTok lead magnet bringing highly engaged new subscribers",
+      "Re-engagement campaigns reactivating dormant subscribers"
+    ],
+    keyRecommendations: "Maintain current acquisition momentum while launching preference center to reduce unnecessary churn from frequency sensitivity."
+  },
+  "Total Active Profiles": {
+    overTime: "Active profiles grew 9% to 1.85M after implementing re-engagement campaign series and TikTok acquisition strategy.",
+    highImpactFactors: [
+      "TikTok lead magnet strategy bringing in highly engaged younger demographics",
+      "Re-engagement flows reactivating previously dormant subscribers"
+    ],
+    keyRecommendations: "Scale TikTok strategy to Instagram Reels and implement behavioral scoring to identify engagement risk early."
   }
 };
