@@ -28,7 +28,6 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
   onClose,
   metric
 }) => {
-  const [showFlagForm, setShowFlagForm] = useState(false);
   const [flagNotes, setFlagNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -49,7 +48,6 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
     });
     
     setIsSubmitting(false);
-    setShowFlagForm(false);
     setFlagNotes('');
     onClose();
   };
@@ -101,73 +99,52 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
               </div>
             </div>
 
-            {!showFlagForm && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Additional Context <span className="text-xs text-muted-foreground">(Optional)</span>
+                </label>
+                <Textarea
+                  placeholder="e.g., 'This seems unusually low compared to last month' or 'Need help optimizing this metric'"
+                  value={flagNotes}
+                  onChange={(e) => setFlagNotes(e.target.value)}
+                  rows={3}
+                  className="resize-none glass-input"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {flagNotes.length}/500 characters
+                </p>
+              </div>
+
+              <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <Send className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Instant notification:</strong> Your Redwood specialist will be immediately notified 
+                    and will respond in your shared agency channel within minutes.
+                  </p>
+                </div>
+              </div>
+
               <Button
-                onClick={() => setShowFlagForm(true)}
+                onClick={handleFlagSubmit}
+                disabled={isSubmitting}
                 className="w-full glass-submit-button"
                 size="lg"
               >
-                <Flag className="h-4 w-4 mr-2" />
-                Request Specialist Review
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Request Specialist Review
+                  </>
+                )}
               </Button>
-            )}
-
-            {showFlagForm && (
-              <div className="space-y-4 animate-fade-in">
-                <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-lg p-4">
-                  <div className="flex items-start gap-2">
-                    <Send className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      <strong>Instant notification:</strong> Your Redwood specialist will be immediately notified 
-                      and will respond in your shared agency channel within minutes.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Additional Context <span className="text-xs text-muted-foreground">(Optional)</span>
-                  </label>
-                  <Textarea
-                    placeholder="e.g., 'This seems unusually low compared to last month' or 'Need help optimizing this metric'"
-                    value={flagNotes}
-                    onChange={(e) => setFlagNotes(e.target.value)}
-                    rows={3}
-                    className="resize-none glass-input"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {flagNotes.length}/500 characters
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowFlagForm(false)}
-                    className="flex-1 glass-button"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleFlagSubmit}
-                    disabled={isSubmitting}
-                    className="flex-1 glass-submit-button"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send to Specialist
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Educational Content - Compact */}
