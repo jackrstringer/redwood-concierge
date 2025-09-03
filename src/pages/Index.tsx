@@ -5,38 +5,46 @@ import { MetricDetailModal } from '@/components/dashboard/MetricDetailModal';
 import { CampaignsTable } from '@/components/dashboard/CampaignsTable';
 import { SubscriptionTable } from '@/components/dashboard/SubscriptionTable';
 import { SectionInsights } from '@/components/dashboard/SectionInsights';
-import {
-  mockToplineKPIs,
-  mockEmailKPIs,
-  mockSendKPIs,
-  mockListGrowthKPIs,
-  mockSubscriptionKPIs,
-  mockCampaigns,
-  generateSparklineData
+import { mockToplineKPIs,mockEmailKPIs,mockSendKPIs,mockListGrowthKPIs,mockSubscriptionKPIs,mockCampaigns,generateSparklineData
 } from '@/data/mockData';
-
+import { fetchCampaigns } from '@/lib/apiHelper';
+import { Campaign } from '@/types/campaign';
 const Index = () => {
   const [selectedDateRange, setSelectedDateRange] = useState('last_30_days');
   const [compareEnabled, setCompareEnabled] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 
+  
   useEffect(() => {
     setMounted(true);
-    // Set dark mode as default
     document.documentElement.classList.add('dark');
+    
+     const loadCampaigns = async () => {
+      try {
+        const data = await fetchCampaigns();
+        console.log("Fetched campaigns (frontend):", data);
+        setCampaigns(data);
+      } catch (error: any) {
+        console.error("Failed to fetch campaigns in index.tsx:", {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+      }
+    };
+    loadCampaigns();
   }, []);
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
-    // In a real app, this would trigger API calls
     console.log('Date range changed to:', range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
     setCompareEnabled(enabled);
-    // In a real app, this would show delta indicators
     console.log('Compare mode:', enabled);
   };
 
@@ -446,7 +454,8 @@ const Index = () => {
 
         {/* Campaigns Table */}
         <section>
-          <CampaignsTable campaigns={mockCampaigns.campaigns} />
+           {/* <CampaignsTable campaigns={mockCampaigns.campaigns} /> */}
+         <CampaignsTable campaigns={campaigns} />
         </section>
       </div>
     </div>

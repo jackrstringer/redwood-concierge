@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 
 interface Campaign {
   id: string;
-  sent_at: string;
+  updated_at: string;
   name: string;
   recipients: number;
   open_rate: number;
@@ -26,7 +26,7 @@ type SortDirection = 'asc' | 'desc';
 
 export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('sent_at');
+  const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const handleSort = (field: SortField) => {
@@ -100,10 +100,10 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => 
                 <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[120px]">
                   <button 
                     className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    onClick={() => handleSort('sent_at')}
+                    onClick={() => handleSort('updated_at')}
                   >
                     Sent
-                    <SortIcon field="sent_at" />
+                    <SortIcon field="updated_at" />
                   </button>
                 </th>
                 <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[200px]">
@@ -187,7 +187,7 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => 
                   className="border-b border-border hover:bg-muted/50 transition-colors"
                 >
                   <td className="p-3 text-sm text-foreground font-medium tabular-nums">
-                    {formatDate(campaign.sent_at)}
+                    {formatDate(campaign.updated_at)}
                   </td>
                   <td className="p-3 text-sm text-foreground font-medium">
                     {campaign.name}
