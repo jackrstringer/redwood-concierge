@@ -16,31 +16,40 @@ const Index = () => {
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
 
   
+  // Function to load campaigns with date range
+  const loadCampaigns = async (dateRange: string = selectedDateRange) => {
+    try {
+      setIsLoadingCampaigns(true);
+      const data = await fetchCampaigns(dateRange);
+      console.log("Fetched campaigns (frontend):", data);
+      setCampaigns(data);
+    } catch (error: any) {
+      console.error("Failed to fetch campaigns in index.tsx:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    } finally {
+      setIsLoadingCampaigns(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     document.documentElement.classList.add('dark');
     
-     const loadCampaigns = async () => {
-      try {
-        const data = await fetchCampaigns();
-        console.log("Fetched campaigns (frontend):", data);
-        setCampaigns(data);
-      } catch (error: any) {
-        console.error("Failed to fetch campaigns in index.tsx:", {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data,
-        });
-      }
-    };
+    // Load initial campaigns
     loadCampaigns();
   }, []);
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
     console.log('Date range changed to:', range);
+    // Reload campaigns with the new date range
+    loadCampaigns(range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
@@ -455,7 +464,7 @@ const Index = () => {
         {/* Campaigns Table */}
         <section>
            {/* <CampaignsTable campaigns={mockCampaigns.campaigns} /> */}
-         <CampaignsTable campaigns={campaigns} />
+         <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
         </section>
       </div>
     </div>

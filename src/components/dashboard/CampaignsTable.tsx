@@ -3,6 +3,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Campaign {
   id: string;
@@ -19,15 +20,30 @@ interface Campaign {
 
 interface CampaignsTableProps {
   campaigns: Campaign[];
+  isLoading?: boolean;
+  dateRange?: string;
 }
 
 type SortField = keyof Campaign;
 type SortDirection = 'asc' | 'desc';
 
-export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => {
+export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoading = false, dateRange }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Helper function to get display name for date range
+  const getDateRangeDisplayName = (range?: string) => {
+    const rangeMap: Record<string, string> = {
+      'today': 'Today',
+      'wtd': 'Week-to-date',
+      'mtd': 'Month-to-date',
+      'last_7_days': 'Last 7 days',
+      'last_30_days': 'Last 30 days',
+      'custom': 'Custom'
+    };
+    return range ? rangeMap[range] || 'Last 30 days' : 'Last 30 days';
+  };
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -77,17 +93,39 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => 
       <ArrowDown className="h-3 w-3" />;
   };
 
+  const SkeletonRow = () => (
+    <tr className="border-b border-border">
+      <td className="p-3"><Skeleton className="h-4 w-16" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-32" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-12" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-10" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-10" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-12" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-16" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-10" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-10" /></td>
+    </tr>
+  );
+
   return (
     <Card className="dashboard-card p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold dashboard-text">Campaigns</h3>
+          <div>
+            <h3 className="text-lg font-semibold dashboard-text">Campaigns</h3>
+            {dateRange && (
+              <p className="text-sm dashboard-text-muted">
+                Showing campaigns for: {getDateRangeDisplayName(dateRange)}
+              </p>
+            )}
+          </div>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dashboard-text-muted" />
             <Input
-              placeholder="Search campaigns..."
+              placeholder={isLoading ? "Loading campaigns..." : "Search campaigns..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={isLoading}
               className="pl-10 dashboard-card border-dashboard-border dashboard-text"
             />
           </div>
@@ -181,11 +219,25 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => 
               </tr>
             </thead>
             <tbody>
-              {filteredAndSortedCampaigns.map((campaign) => (
-                <tr 
-                  key={campaign.id} 
-                  className="border-b border-border hover:bg-muted/50 transition-colors"
-                >
+              {isLoading ? (
+                // Show skeleton rows while loading
+                Array.from({ length: 5 }).map((_, index) => (
+                  <SkeletonRow key={index} />
+                ))
+              ) : filteredAndSortedCampaigns.length === 0 ? (
+                // Show empty state when no campaigns
+                <tr>
+                  <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                    No campaigns found
+                  </td>
+                </tr>
+              ) : (
+                // Show actual campaign data
+                filteredAndSortedCampaigns.map((campaign) => (
+                  <tr 
+                    key={campaign.id} 
+                    className="border-b border-border hover:bg-muted/50 transition-colors"
+                  >
                   <td className="p-3 text-sm text-foreground font-medium tabular-nums">
                     {formatDate(campaign.updated_at)}
                   </td>
@@ -223,9 +275,10 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns }) => 
                   </td>
                   <td className="p-3 text-sm text-muted-foreground tabular-nums">
                     ${campaign.aov.toFixed(0)}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
