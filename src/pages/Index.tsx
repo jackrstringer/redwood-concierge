@@ -463,7 +463,6 @@ const Index = () => {
 
         {/* Campaigns Table */}
         <section>
-           {/* <CampaignsTable campaigns={mockCampaigns.campaigns} /> */}
          <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
         </section>
       </div>

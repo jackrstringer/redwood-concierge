@@ -22,3 +22,100 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Pythong related code
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# PyCharm / VS Code / other IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.swm
+
+# Django / Flask / FastAPI stuff
+*.log
+local_settings.py
+db.sqlite3
+instance/
+.webassets-cache
+
+# Environment variables
+.env
+.env.*
+*.env
+
+# MyPy / Pyre / Pylint
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Mac / Linux / Windows system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# command for script for python
+#python -m app.campaign_value_report_script ....> post in campaign_value_report
+#python -m app.campaign_script ....> post in campaign
+
+#command to run python FastAPI
+#uvicorn app.main:app --host localhost --port 3001 --reload
+
