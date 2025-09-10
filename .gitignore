@@ -112,10 +112,5 @@ dmypy.json
 Thumbs.db
 Desktop.ini
 
-# command for script for python
-#python -m app.campaign_value_report_script ....> post in campaign_value_report
-#python -m app.campaign_script ....> post in campaign
 
-#command to run python FastAPI
-#uvicorn app.main:app --host localhost --port 3001 --reload
 
