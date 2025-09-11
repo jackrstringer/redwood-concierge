@@ -5,11 +5,11 @@ import logging
 import time
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from app.core.database import SessionLocal, Base, engine
-from app.models.campaign_models import Campaign, CampaignValuesReport
-from app.services.api_service import APIService
-from app.services.database_service import DatabaseService
-from app.utils.helpers import get_environment_variables
+from core.database import SessionLocal, Base, engine
+from models.campaign_models import Campaign, CampaignValuesReport
+from services.api_service import APIService
+from services.database_service import DatabaseService
+from utils.helpers import get_environment_variables
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

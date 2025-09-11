@@ -73,6 +73,6 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
 ## How to run python API
-- python -m app.campaign_value_report_script ....> post in campaign_value_report
-- python -m app.campaign_script ....> post in campaign
-- uvicorn app.main:app --host localhost --port 3001 --reload
+- python -m campaign_value_report_script ....> post in campaign_value_report
+- python -m campaign_script ....> post in campaign
+- uvicorn main:app --host localhost --port 3001 --reload

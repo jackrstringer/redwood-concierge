@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, DateTime, Boolean,Integer,func,text
 from sqlalchemy.dialects.postgresql import JSONB
-from app.core.database import Base
+from core.database import Base
 from sqlalchemy.dialects.postgresql import TIMESTAMP
-from app.core.database import Base
+from core.database import Base
 class Campaign(Base):
     __tablename__ = "campaign"
     __table_args__ = {"extend_existing": True}  # Add this line

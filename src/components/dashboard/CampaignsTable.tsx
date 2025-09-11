@@ -35,12 +35,10 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
   // Helper function to get display name for date range
   const getDateRangeDisplayName = (range?: string) => {
     const rangeMap: Record<string, string> = {
-      'today': 'Today',
-      'wtd': 'Week-to-date',
-      'mtd': 'Month-to-date',
+      
       'last_7_days': 'Last 7 days',
       'last_30_days': 'Last 30 days',
-      'custom': 'Custom'
+      
     };
     return range ? rangeMap[range] || 'Last 30 days' : 'Last 30 days';
   };

@@ -1,10 +1,10 @@
 from sqlalchemy import Column, String, Integer, Numeric, DateTime, select, Boolean, and_
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
-from app.core.database import Base
+from core.database import Base
 
 class Campaign(Base):
-    __tablename__ = "campaign"
-    __table_args__ = {"extend_existing": True}  # Add this line
+    __tablename__ = "campaigns"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(String(100), primary_key=True, index=True)
     type = Column(String(50), nullable=True)
@@ -22,10 +22,10 @@ class Campaign(Base):
     relationships = Column(JSONB)
     links = Column(JSONB)
     raw_data = Column(JSONB)
-    
-    def __repr__(self):
-        return f"<Campaign(id={self.id}, name={self.name})>"
+    channel = Column(String(10), nullable=True) 
 
+    def __repr__(self):
+        return f"<Campaign(id={self.id}, name={self.name}, channel={self.channel})>"
 class CampaignValuesReport(Base):
     __tablename__ = "campaign_report_values"
     __table_args__ = {"extend_existing": True}  

@@ -5,56 +5,89 @@ import { MetricDetailModal } from '@/components/dashboard/MetricDetailModal';
 import { CampaignsTable } from '@/components/dashboard/CampaignsTable';
 import { SubscriptionTable } from '@/components/dashboard/SubscriptionTable';
 import { SectionInsights } from '@/components/dashboard/SectionInsights';
-import { mockToplineKPIs,mockEmailKPIs,mockSendKPIs,mockListGrowthKPIs,mockSubscriptionKPIs,mockCampaigns,generateSparklineData
+import {
+  mockToplineKPIs,
+  mockEmailKPIs,
+  mockSendKPIs,
+  mockListGrowthKPIs,
+  mockSubscriptionKPIs,
+  mockCampaigns,
+  generateSparklineData,
 } from '@/data/mockData';
 import { fetchCampaigns } from '@/lib/apiHelper';
 import { Campaign } from '@/types/campaign';
+
 const Index = () => {
-  const [selectedDateRange, setSelectedDateRange] = useState('last_30_days');
+  const [selectedDateRange, setSelectedDateRange] = useState('last_7_days');
   const [compareEnabled, setCompareEnabled] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
-
+  const [previousRevenue, setPreviousRevenue] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0); // Add this state
   
-  // Function to load campaigns with date range
-  const loadCampaigns = async (dateRange: string = selectedDateRange) => {
-    try {
-      setIsLoadingCampaigns(true);
-      const data = await fetchCampaigns(dateRange);
-      console.log("Fetched campaigns (frontend):", data);
-      setCampaigns(data);
-    } catch (error: any) {
-      console.error("Failed to fetch campaigns in index.tsx:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
-    } finally {
-      setIsLoadingCampaigns(false);
-    }
+  // 🔹 Map current timeframe to its "previous" version
+  const getPreviousRange = (range: string) => {
+    if (range === 'last_7_days') return 'previous_7_days';
+    if (range === 'last_30_days') return 'previous_30_days';
+    return 'previous_30_days';
   };
+
+  // 🔹 Load campaigns and handle compare logic
+const loadCampaigns = async (dateRange: string = selectedDateRange) => {
+  try {
+    setIsLoadingCampaigns(true);
+    // fetch current
+    const currentData = await fetchCampaigns(dateRange);
+    setCampaigns(currentData);
+    
+    // calculate total revenue from current data
+    const currentTotalRevenue = currentData.reduce(
+      (sum, c) => sum + (c.revenue || 0),
+      0
+    );
+    setTotalRevenue(currentTotalRevenue); // Set the total revenue state
+    
+    // fetch previous only if compare is enabled
+    if (compareEnabled) {
+      const prevRange = getPreviousRange(dateRange);
+      const prevData = await fetchCampaigns(prevRange);
+      const prevTotalRevenue = prevData.reduce(
+        (sum, c) => sum + (c.revenue || 0),
+        0
+      );
+      setPreviousRevenue(prevTotalRevenue);
+    } else {
+      setPreviousRevenue(0);
+    }
+  } catch (error: any) {
+    console.error('Failed to fetch campaigns in index.tsx:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+  } finally {
+    setIsLoadingCampaigns(false);
+  }
+};
 
   useEffect(() => {
     setMounted(true);
     document.documentElement.classList.add('dark');
-    
-    // Load initial campaigns
+    // initial load
     loadCampaigns();
   }, []);
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
-    console.log('Date range changed to:', range);
-    // Reload campaigns with the new date range
     loadCampaigns(range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
     setCompareEnabled(enabled);
-    console.log('Compare mode:', enabled);
+    loadCampaigns(selectedDateRange);
   };
 
   const handleMetricClick = (metric: any) => {
@@ -67,44 +100,88 @@ const Index = () => {
     setSelectedMetric(null);
   };
 
+  // Calculate total email revenue
+  const totalEmailRevenue = campaigns
+    .filter(c => c.channel === 'email')
+    .reduce((sum, c) => sum + (c.revenue || 0), 0);
+
+  // Calculate Email Rev Share as a decimal (0-1)
+  const emailRevShare = totalRevenue > 0
+    ? totalEmailRevenue / totalRevenue
+    : 0;
+
+  // Calculate previous period email revenue and delta
+  let previousEmailRevenue = 0;
+  let previousEmailRevShare = 0;
+  let emailRevDelta = undefined;
+
+  if (compareEnabled) {
+    // Calculate previous email revenue
+    previousEmailRevenue = campaigns
+      .filter(c => c.channel === 'email')
+      .reduce((sum, c) => sum + (c.previous_revenue || 0), 0);
+    
+    // Calculate previous Email Rev Share as a decimal
+    previousEmailRevShare = previousRevenue > 0
+      ? previousEmailRevenue / previousRevenue
+      : 0;
+    
+    // Calculate the delta as percentage points (not percentage change)
+    emailRevDelta = emailRevShare - previousEmailRevShare;
+  }
+
   if (!mounted) {
     return <div className="min-h-screen dashboard-bg" />;
   }
 
   return (
     <div className="min-h-screen dashboard-bg overflow-x-hidden max-w-full">
-      <DashboardHeader 
+      <DashboardHeader
         onDateRangeChange={handleDateRangeChange}
         onCompareToggle={handleCompareToggle}
       />
-      
       <div className="p-4 sm:p-6 space-y-8 max-w-full overflow-x-hidden">
         {/* Core Revenue Metrics */}
         <section>
-          <h2 className="text-xl font-semibold dashboard-text mb-4">Core Revenue Metrics</h2>
+          <h2 className="text-xl font-semibold dashboard-text mb-4">
+            Core Revenue Metrics
+          </h2>
           <SectionInsights sectionName="Core Revenue Metrics" />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             <KPICard
               title="Total Revenue"
-              value={mockToplineKPIs.cards.total_revenue}
+              value={totalRevenue} // Now using the state variable
               format="currency"
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.total_revenue_pct,
-                isPositive: mockToplineKPIs.delta_prev.total_revenue_pct > 0
-              } : undefined}
+              delta={
+                compareEnabled && previousRevenue > 0
+                  ? {
+                      value:
+                        ((totalRevenue - previousRevenue) / previousRevenue) *
+                        100,
+                      isPositive: totalRevenue >= previousRevenue,
+                    }
+                  : undefined
+              }
               sparkline={generateSparklineData()}
-              isHighPerformance={mockToplineKPIs.delta_prev.total_revenue_pct > 0.1}
+              isHighPerformance={totalRevenue > previousRevenue}
               onCardClick={handleMetricClick}
             />
-            <KPICard
-              title="Email Rev Share"
-              value={`${((mockToplineKPIs.cards.email_revenue_split.email / mockToplineKPIs.cards.total_revenue) * 100).toFixed(1)}%`}
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.email_revenue_split_pct,
-                isPositive: mockToplineKPIs.delta_prev.email_revenue_split_pct > 0
-              } : undefined}
-              onCardClick={handleMetricClick}
-            />
+    {/* Email Rev Share Card */}
+    <KPICard
+      title="Email Rev Share"
+      value={emailRevShare}
+      format="percentage"
+      delta={emailRevDelta !== undefined ? {
+        value: emailRevDelta,
+        isPositive: emailRevDelta >= 0
+      } : undefined}
+      sparkline={generateSparklineData()}
+      onCardClick={handleMetricClick}
+    />
+    
+    
+           
+
             <KPICard
               title="Campaign Rev"
               value={mockToplineKPIs.cards.campaign_revenue}

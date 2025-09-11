@@ -211,12 +211,12 @@
 import axios from "axios";
 import { Campaign } from "@/types/campaign";
 
-export const fetchCampaigns = async (dateRange: string = 'last_30_days'): Promise<Campaign[]> => {
+export const fetchCampaigns = async (timeframe: string = 'last_30_days'): Promise<Campaign[]> => {
   try {
-    console.log(`Fetching campaigns for date range: ${dateRange}`);
+    console.log(`Fetching campaigns for date range: ${timeframe}`);
     
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/campaigns`, {
-      params: { dateRange }
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/campaigns`, {
+      params: { timeframe }
     });
     
     const campaigns = response.data || [];

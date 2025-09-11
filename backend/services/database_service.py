@@ -176,9 +176,9 @@ from datetime import datetime, timezone
 from sqlalchemy.sql import text
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from app.utils.helpers import get_current_utc_time
-from app.core.database import SessionLocal
-from app.models.campaign_models import Campaign, CampaignValuesReport
+from utils.helpers import get_current_utc_time
+from core.database import SessionLocal
+from models.campaign_models import Campaign, CampaignValuesReport
 
 logger = logging.getLogger(__name__)
 

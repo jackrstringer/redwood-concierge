@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, ChevronDown, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,12 +9,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const dateRangeOptions = [
-  { label: 'Today', value: 'today' },
-  { label: 'Week-to-date', value: 'wtd' },
-  { label: 'Month-to-date', value: 'mtd' },
   { label: 'Last 7 days', value: 'last_7_days' },
   { label: 'Last 30 days', value: 'last_30_days' },
-  { label: 'Custom', value: 'custom' },
 ];
 
 interface DashboardHeaderProps {
@@ -26,8 +22,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onDateRangeChange,
   onCompareToggle
 }) => {
-  const [selectedRange, setSelectedRange] = useState('last_30_days');
+  const [selectedRange, setSelectedRange] = useState('last_7_days');
   const [compareEnabled, setCompareEnabled] = useState(true);
+
+  
+  useEffect(() => {
+  onDateRangeChange('last_7_days');
+}, []);
+
 
   const handleRangeChange = (range: string) => {
     setSelectedRange(range);
@@ -42,7 +44,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const selectedRangeLabel = dateRangeOptions.find(
     option => option.value === selectedRange
-  )?.label || 'Last 30 days';
+  )?.label || 'Last 7 days';
 
   return (
     <div className="dashboard-card border-b dashboard-border sticky top-0 z-10 overflow-x-hidden backdrop-blur-lg bg-background/90">

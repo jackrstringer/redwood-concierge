@@ -11,4 +11,7 @@ export interface Campaign {
   aov: number;
   status?: string; 
   createdAt?: string; 
+  channel?: string;
+  previous_revenue?: number; // Add this optional property
+
 }

@@ -29,7 +29,7 @@ Base = declarative_base()
 
 
 class Campaign(Base):
-    __tablename__ = "campaign"
+    __tablename__ = "campaigns"
 
     id = Column(String(100), primary_key=True, index=True)
     type = Column(String(50), nullable=True)
@@ -47,12 +47,12 @@ class Campaign(Base):
     relationships = Column(JSONB)
     links = Column(JSONB)
     raw_data = Column(JSONB)
-
+    channel = Column(String(10), nullable=True)
     def __repr__(self):
         return f"<Campaign(id={self.id}, type={self.type}, name={self.name}, status={self.status})>"
 
 
-def fetch_campaigns(channel: str = "email"):
+def fetch_campaigns_email(channel: str = "email"):
     if channel not in ["email", "sms"]:
         raise ValueError("Channel must be either 'email' or 'sms'")
 
@@ -78,8 +78,33 @@ def fetch_campaigns(channel: str = "email"):
 
     return response.json()
 
+def fetch_campaigns_sms(channel: str = "sms"):
+    if channel not in ["email", "sms"]:
+        raise ValueError("Channel must be either 'email' or 'sms'")
 
-def save_campaigns(campaigns_response):
+    filter_param = quote(f'equals(messages.channel,"{channel}")')
+    url = f"{BASE_URL}?filter={filter_param}"
+
+    revision_date = "2025-07-15"
+
+    headers = {
+        "Authorization": f"Klaviyo-API-Key {API_KEY}",
+        "Accept": "application/json",
+        "REVISION": revision_date,
+    }
+
+    print(f"Fetching {channel} campaigns from API with REVISION {revision_date}...")
+    response = requests.get(url, headers=headers)
+
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        print("Error:", response.text)
+        raise e
+
+    return response.json()
+
+def save_campaigns(campaigns_response, channel: str):
     """Save campaigns into PostgreSQL"""
     db = SessionLocal()
     campaigns = campaigns_response.get("data", [])
@@ -100,6 +125,7 @@ def save_campaigns(campaigns_response):
             send_strategy=item["attributes"].get("send_strategy"),
             relationships=item.get("relationships"),
             links=item.get("links"),
+            channel=channel,
             raw_data=item,
         )
         db.merge(campaign)
@@ -109,11 +135,16 @@ def save_campaigns(campaigns_response):
 
 def main():
     Base.metadata.create_all(bind=engine)
-    print("Fetching campaigns from API...")
-    campaigns = fetch_campaigns()
-    print(f"Fetched {len(campaigns.get('data', []))} campaigns")
+    print("Fetching email campaigns from API...")
+    campaigns = fetch_campaigns_email()
+    print(f"Fetched {len(campaigns.get('data', []))} email campaigns")
+    save_campaigns(campaigns, channel="email")
 
-    save_campaigns(campaigns)
+    print("Fetching SMS campaigns from API...")
+    campaigns = fetch_campaigns_sms()
+    print(f"Fetched {len(campaigns.get('data', []))} SMS campaigns")
+    save_campaigns(campaigns, channel="sms")
+
     print("Campaigns saved to DB")
 
 
