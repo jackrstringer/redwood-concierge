@@ -4,7 +4,7 @@ from core.database import Base
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from core.database import Base
 class Campaign(Base):
-    __tablename__ = "campaign"
+    __tablename__ = "campaigns"
     __table_args__ = {"extend_existing": True}  # Add this line
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True) 

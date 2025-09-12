@@ -14,7 +14,6 @@ def validate_environment_variables():
     required_vars = [
         "KLAVIYO_PRIVATE_API_KEY",
         "CONVERSION_METRIC_ID",
-        "TimeFrame",
         "DATABASE_URL"
     ]
     
@@ -39,7 +38,6 @@ def get_environment_variables():
     return {
         "api_key": os.getenv("KLAVIYO_PRIVATE_API_KEY"),
         "conversion_metric_id": os.getenv("CONVERSION_METRIC_ID"),
-        "timeframe": os.getenv("TimeFrame"),
         "base_url": os.getenv("KLAVIYO_API_URL", "https://a.klaviyo.com/").rstrip("/") + "/api/campaign-values-reports"
     }
 

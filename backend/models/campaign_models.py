@@ -44,6 +44,7 @@ class CampaignValuesReport(Base):
     click_rate = Column(Numeric)
     revenue_per_recipient = Column(Numeric)
     average_order_value = Column(Numeric)
+    job_id = Column(Integer, nullable=True)
     created_at = Column(TIMESTAMP, nullable=True)
     updated_at = Column(TIMESTAMP, nullable=True)
     

@@ -176,6 +176,7 @@ from datetime import datetime, timezone
 from sqlalchemy.sql import text
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from models.campaign_jobs import CampaignJob
 from utils.helpers import get_current_utc_time
 from core.database import SessionLocal
 from models.campaign_models import Campaign, CampaignValuesReport
@@ -184,26 +185,27 @@ logger = logging.getLogger(__name__)
 
 class DatabaseService:
     @staticmethod
-    def get_top_campaign_ids(limit=15):
+    def get_top_campaign_ids(limit=10):
         """
-        Get top campaign IDs from the database
+        Get top campaign IDs from the database where status = 'Sent'
         """
         db: Session = SessionLocal()
         try:
             from sqlalchemy import select
-            stmt = select(Campaign.id).limit(limit)
+            stmt = select(Campaign.id).where(Campaign.status == "Sent").limit(limit)
             result = db.execute(stmt).fetchall()
             campaign_ids = [row[0] for row in result]
-            logger.info(f"Found {len(campaign_ids)} campaign IDs in the database")
+            logger.info(f"Found {len(campaign_ids)} campaign IDs in the database with status='Sent'")
             return campaign_ids
         except Exception as e:
             logger.error(f"Error fetching campaign IDs from database: {e}")
             return []
         finally:
             db.close()
+
     
     @staticmethod
-    def save_campaign_values_report(response, campaign_id, conversion_metric_id=None):
+    def save_campaign_values_report(response, campaign_id, conversion_metric_id=None, job_id=None):
         """
         Save or update campaign values report in the database
         """
@@ -221,7 +223,7 @@ class DatabaseService:
             
             attributes = data.get("attributes", {})
             results = attributes.get("results", [])
-            timeframe = attributes.get("timeframe", {}).get("key", "last_7_days")
+            timeframe = attributes.get("timeframe", {}).get("key", "last_30_days")
             
             relationships = data.get("relationships", {})
             campaigns_data = relationships.get("campaigns", {}).get("data", [])
@@ -251,13 +253,13 @@ class DatabaseService:
             if existing_report:
                 DatabaseService._update_existing_report(
                     existing_report, results, campaign_id, campaign_relationship_id, 
-                    timeframe, conversion_metric_id, report_id, current_utc_time
+                    timeframe, conversion_metric_id, report_id, current_utc_time, job_id
                 )
                 logger.info(f"Updated report for campaign_message_id {campaign_message_id} with timeframe {timeframe}")
             else:
                 report = DatabaseService._create_new_report(
                     report_id, report_type, results, campaign_id, campaign_message_id, 
-                    campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time
+                    campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time, job_id
                 )
                 db.add(report)
                 logger.info(f"Added new report for campaign_message_id {campaign_message_id} with timeframe {timeframe}")
@@ -271,7 +273,7 @@ class DatabaseService:
     
     @staticmethod
     def _update_existing_report(existing_report, results, campaign_id, campaign_relationship_id, 
-                               timeframe, conversion_metric_id, report_id, current_utc_time):
+                               timeframe, conversion_metric_id, report_id, current_utc_time, job_id):
         """Helper method to update an existing report"""
         if results:
             result = results[0] 
@@ -302,10 +304,11 @@ class DatabaseService:
         existing_report.conversion_metric_id = conversion_metric_id
         existing_report.report_id = report_id  
         existing_report.updated_at = current_utc_time
+        existing_report.job_id = job_id.id if job_id else None
     
     @staticmethod
     def _create_new_report(report_id, report_type, results, campaign_id, campaign_message_id, 
-                           campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time):
+                           campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time, job_id):
         """Helper method to create a new report"""
         if results:
             result = results[0] 
@@ -327,6 +330,7 @@ class DatabaseService:
                 revenue_per_recipient=statistics.get("revenue_per_recipient"),
                 average_order_value=statistics.get("average_order_value"),
                 created_at=current_utc_time,
+                job_id=job_id.id if job_id else None
             )
         else:
             return CampaignValuesReport(
@@ -344,4 +348,29 @@ class DatabaseService:
                 revenue_per_recipient=0,
                 average_order_value=0,
                 created_at=current_utc_time,
+                job_id=job_id.id if job_id else None
             )
+    @staticmethod
+    def create_new_job(type, channel, timeframe):
+        """
+        Create a new campaign job in the database
+        """
+        db: Session = SessionLocal()
+        try:
+            new_job = CampaignJob(
+                type=type,
+                channel=channel,
+                timeframe=timeframe,
+                created_at=get_current_utc_time()
+            )
+            db.add(new_job)
+            db.commit()
+            db.refresh(new_job)
+            logger.info(f"Created new job with ID {new_job.id}")
+            return new_job
+        except Exception as e:
+            logger.error(f"Error creating new job in database: {e}")
+            db.rollback()
+            return None
+        finally:
+            db.close()

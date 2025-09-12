@@ -32,7 +32,7 @@ class CampaignValuesReport(Base):
     average_order_value = Column(Numeric)
     created_at =  Column( TIMESTAMP, nullable=True)
     updated_at = Column( TIMESTAMP, nullable=True)
-
+    job_id = Column(Integer, nullable=True)
     
     def __repr__(self):
         return f"<CampaignValuesReport(id={self.id}, campaign_id={self.campaign_id})>"
