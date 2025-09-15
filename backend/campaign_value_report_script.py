@@ -1,6 +1,3 @@
-
-
-
 import logging
 import time
 import argparse
@@ -21,7 +18,7 @@ def main(timeframe: str = "last_30_days"):
     
     Base.metadata.create_all(bind=engine)
     
-    campaign_ids = DatabaseService.get_top_campaign_ids(limit=100)
+    campaign_ids = DatabaseService.get_top_campaign_ids(limit=10)
     
     if not campaign_ids:
         logger.warning("No campaign IDs found in the database. Exiting.")
@@ -31,7 +28,7 @@ def main(timeframe: str = "last_30_days"):
     request_delay = 30
     
     logger.info("Waiting 30 seconds before starting requests...")
-    time.sleep(30)
+    time.sleep(request_delay)
     
     for i, campaign_id in enumerate(campaign_ids):
         try:
@@ -43,7 +40,7 @@ def main(timeframe: str = "last_30_days"):
                 conversion_metric_id=env_vars["conversion_metric_id"]
             )
 
-            DatabaseService.save_campaign_values_report(report, campaign_id, conversion_metric_id=env_vars["conversion_metric_id"], job_id=job_id)
+            DatabaseService.save_campaign_values_report(report, campaign_id, timeframe, conversion_metric_id=env_vars["conversion_metric_id"], job_id=job_id)
 
             logger.info(f"Successfully processed campaign ID: {campaign_id}")
             

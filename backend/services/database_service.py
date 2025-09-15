@@ -205,7 +205,7 @@ class DatabaseService:
 
     
     @staticmethod
-    def save_campaign_values_report(response, campaign_id, conversion_metric_id=None, job_id=None):
+    def save_campaign_values_report(response, campaign_id, timeframe, conversion_metric_id=None, job_id=None):
         """
         Save or update campaign values report in the database
         """
@@ -223,7 +223,6 @@ class DatabaseService:
             
             attributes = data.get("attributes", {})
             results = attributes.get("results", [])
-            timeframe = attributes.get("timeframe", {}).get("key", "last_30_days")
             
             relationships = data.get("relationships", {})
             campaigns_data = relationships.get("campaigns", {}).get("data", [])
