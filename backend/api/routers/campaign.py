@@ -28,7 +28,20 @@ class CampaignResponse(BaseModel):
     aov: Optional[float] = 0.0 
     placed_orders: Optional[int] = 0
     channel: Optional[str] = None
-    previous_revenue: Optional[float] = None  
+    type: Optional[str] = None
+    previous_revenue: Optional[float] = None
+
+class AggregateMetricsResponse(BaseModel):
+    total_revenue: Optional[float] = 0.0
+    total_recipients: Optional[int] = 0
+    total_placed_orders: Optional[int] = 0
+    aggregate_rpr: Optional[float] = 0.0  # Total Revenue / Total Recipients
+    aggregate_aov: Optional[float] = 0.0  # Total Revenue / Total Placed Orders
+    previous_total_revenue: Optional[float] = None
+    previous_total_recipients: Optional[int] = None
+    previous_total_placed_orders: Optional[int] = None
+    previous_aggregate_rpr: Optional[float] = None
+    previous_aggregate_aov: Optional[float] = None
 
 @router.get("/campaigns", response_model=List[CampaignResponse])
 async def get_campaigns(
@@ -53,6 +66,7 @@ async def get_campaigns(
                     c.updated_at,
                     c.name,
                     c.channel,
+                    c.type,
                     crv.recipients,
                     crv.open_rate,
                     crv.click_rate,
@@ -81,6 +95,7 @@ async def get_campaigns(
                     c.updated_at,
                     c.name,
                     c.channel,
+                    c.type,
                     crv.recipients,
                     crv.open_rate,
                     crv.click_rate,
@@ -112,7 +127,8 @@ async def get_campaigns(
                 "rpr": float(row.revenue_per_recipient) if row.revenue_per_recipient is not None else 0.0,
                 "aov": float(row.average_order_value) if row.average_order_value is not None else 0.0,
                 "placed_orders": float(row.placed_orders) if row.placed_orders is not None else 0.0,
-                "channel": row.channel if row.channel is not None else None
+                "channel": row.channel if row.channel is not None else None,
+                "type": row.type if row.type is not None else None
             }
             
             # Add previous revenue if available
@@ -129,4 +145,104 @@ async def get_campaigns(
         raise HTTPException(
             status_code=500, 
             detail=f"An error occurred while fetching campaigns: {str(e)}"
+        )
+
+@router.get("/campaigns/aggregate-metrics", response_model=AggregateMetricsResponse)
+async def get_aggregate_metrics(
+    timeframe: str = Query("timeframe"),
+    db: Session = Depends(get_db)
+):
+    try:
+        logger.info(f"Fetching aggregate metrics for timeframe: {timeframe}")
+        
+        # Determine previous timeframe
+        prev_timeframe = None
+        if timeframe == 'last_7_days':
+            prev_timeframe = 'previous_7_days'
+        elif timeframe == 'last_30_days':
+            prev_timeframe = 'previous_30_days'
+        
+        # Get current period aggregates with simple averages
+        current_query = text("""
+            SELECT 
+                SUM(crv.recipients * crv.revenue_per_recipient) AS total_revenue,
+                SUM(crv.recipients) AS total_recipients,
+                SUM(crv.placed_orders) AS total_placed_orders,
+                -- Simple average RPR for the timeframe
+                AVG(crv.revenue_per_recipient) AS avg_revenue_per_recipient,
+                -- Simple average AOV for the timeframe
+                AVG(crv.average_order_value) AS avg_order_value
+            FROM 
+                campaigns c
+            JOIN 
+                campaign_report_values crv ON c.id = crv.campaign_id
+            WHERE 
+                crv.timeframe = :timeframe
+        """)
+        
+        current_result = db.execute(current_query, {"timeframe": timeframe}).fetchone()
+        
+        # Calculate current period metrics
+        total_revenue = float(current_result.total_revenue) if current_result.total_revenue is not None else 0.0
+        total_recipients = int(current_result.total_recipients) if current_result.total_recipients is not None else 0
+        total_placed_orders = int(current_result.total_placed_orders) if current_result.total_placed_orders is not None else 0
+        
+        # Use the weighted averages calculated in the database query
+        aggregate_rpr = float(current_result.avg_revenue_per_recipient) if current_result.avg_revenue_per_recipient is not None else 0.0
+        aggregate_aov = float(current_result.avg_order_value) if current_result.avg_order_value is not None else 0.0
+        
+        response_data = {
+            "total_revenue": total_revenue,
+            "total_recipients": total_recipients,
+            "total_placed_orders": total_placed_orders,
+            "aggregate_rpr": aggregate_rpr,
+            "aggregate_aov": aggregate_aov
+        }
+        
+        # Get previous period if comparison is needed
+        if prev_timeframe:
+            prev_query = text("""
+                SELECT 
+                    SUM(crv.recipients * crv.revenue_per_recipient) AS total_revenue,
+                    SUM(crv.recipients) AS total_recipients,
+                    SUM(crv.placed_orders) AS total_placed_orders,
+                    -- Simple average RPR for the timeframe
+                    AVG(crv.revenue_per_recipient) AS avg_revenue_per_recipient,
+                    -- Simple average AOV for the timeframe
+                    AVG(crv.average_order_value) AS avg_order_value
+                FROM 
+                    campaigns c
+                JOIN 
+                    campaign_report_values crv ON c.id = crv.campaign_id
+                WHERE 
+                    crv.timeframe = :prev_timeframe
+            """)
+            
+            prev_result = db.execute(prev_query, {"prev_timeframe": prev_timeframe}).fetchone()
+            
+            if prev_result:
+                prev_total_revenue = float(prev_result.total_revenue) if prev_result.total_revenue is not None else 0.0
+                prev_total_recipients = int(prev_result.total_recipients) if prev_result.total_recipients is not None else 0
+                prev_total_placed_orders = int(prev_result.total_placed_orders) if prev_result.total_placed_orders is not None else 0
+                
+                # Use the weighted averages calculated in the database query
+                prev_aggregate_rpr = float(prev_result.avg_revenue_per_recipient) if prev_result.avg_revenue_per_recipient is not None else 0.0
+                prev_aggregate_aov = float(prev_result.avg_order_value) if prev_result.avg_order_value is not None else 0.0
+                
+                response_data.update({
+                    "previous_total_revenue": prev_total_revenue,
+                    "previous_total_recipients": prev_total_recipients,
+                    "previous_total_placed_orders": prev_total_placed_orders,
+                    "previous_aggregate_rpr": prev_aggregate_rpr,
+                    "previous_aggregate_aov": prev_aggregate_aov
+                })
+        
+        logger.info(f"Successfully calculated aggregate metrics: RPR={aggregate_rpr:.4f}, AOV={aggregate_aov:.2f}")
+        return AggregateMetricsResponse(**response_data)
+        
+    except Exception as e:
+        logger.error(f"Error fetching aggregate metrics: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An error occurred while fetching aggregate metrics: {str(e)}"
         )

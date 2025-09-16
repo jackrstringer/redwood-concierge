@@ -14,7 +14,7 @@ import {
   mockCampaigns,
   generateSparklineData,
 } from '@/data/mockData';
-import { fetchCampaigns } from '@/lib/apiHelper';
+import { fetchCampaigns, fetchAggregateMetrics } from '@/lib/apiHelper';
 import { Campaign } from '@/types/campaign';
 
 const Index = () => {
@@ -27,12 +27,42 @@ const Index = () => {
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
   const [previousRevenue, setPreviousRevenue] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0); // Add this state
+  const [aggregateRPR, setAggregateRPR] = useState(0);
+  const [aggregateAOV, setAggregateAOV] = useState(0);
+  const [previousAggregateRPR, setPreviousAggregateRPR] = useState(0);
+  const [previousAggregateAOV, setPreviousAggregateAOV] = useState(0);
+  const [campaignRevenue, setCampaignRevenue] = useState(0);
+  const [previousCampaignRevenue, setPreviousCampaignRevenue] = useState(0);
   
   // 🔹 Map current timeframe to its "previous" version
   const getPreviousRange = (range: string) => {
     if (range === 'last_7_days') return 'previous_7_days';
     if (range === 'last_30_days') return 'previous_30_days';
     return 'previous_30_days';
+  };
+
+  // 🔹 Load aggregate metrics (RPR and AOV)
+  const loadAggregateMetrics = async (dateRange: string = selectedDateRange) => {
+    try {
+      const metrics = await fetchAggregateMetrics(dateRange);
+      if (metrics) {
+        setAggregateRPR(metrics.aggregate_rpr);
+        setAggregateAOV(metrics.aggregate_aov);
+        
+        if (compareEnabled && metrics.previous_aggregate_rpr !== undefined && metrics.previous_aggregate_aov !== undefined) {
+          setPreviousAggregateRPR(metrics.previous_aggregate_rpr);
+          setPreviousAggregateAOV(metrics.previous_aggregate_aov);
+        } else {
+          setPreviousAggregateRPR(0);
+          setPreviousAggregateAOV(0);
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch aggregate metrics:', error);
+      // Fallback to mock data if API fails
+      setAggregateRPR(mockToplineKPIs.cards.rpr);
+      setAggregateAOV(mockToplineKPIs.cards.aov);
+    }
   };
 
   // 🔹 Load campaigns and handle compare logic
@@ -50,6 +80,13 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     );
     setTotalRevenue(currentTotalRevenue); // Set the total revenue state
     
+    // Calculate campaign revenue (average revenue for campaigns with type='campaign')
+    const campaignTypeData = currentData.filter(c => c.type === 'campaign');
+    const currentCampaignRevenue = campaignTypeData.length > 0
+      ? campaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0) / campaignTypeData.length
+      : 0;
+    setCampaignRevenue(currentCampaignRevenue);
+    
     // fetch previous only if compare is enabled
     if (compareEnabled) {
       const prevRange = getPreviousRange(dateRange);
@@ -59,8 +96,16 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
         0
       );
       setPreviousRevenue(prevTotalRevenue);
+      
+      // Calculate previous campaign revenue (average revenue for campaigns with type='campaign')
+      const prevCampaignTypeData = prevData.filter(c => c.type === 'campaign');
+      const prevCampaignRevenue = prevCampaignTypeData.length > 0
+        ? prevCampaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0) / prevCampaignTypeData.length
+        : 0;
+      setPreviousCampaignRevenue(prevCampaignRevenue);
     } else {
       setPreviousRevenue(0);
+      setPreviousCampaignRevenue(0);
     }
   } catch (error: any) {
     console.error('Failed to fetch campaigns in index.tsx:', {
@@ -78,16 +123,19 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     document.documentElement.classList.add('dark');
     // initial load
     loadCampaigns();
+    loadAggregateMetrics();
   }, []);
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
     loadCampaigns(range);
+    loadAggregateMetrics(range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
     setCompareEnabled(enabled);
     loadCampaigns(selectedDateRange);
+    loadAggregateMetrics(selectedDateRange);
   };
 
   const handleMetricClick = (metric: any) => {
@@ -166,35 +214,37 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
               isHighPerformance={totalRevenue > previousRevenue}
               onCardClick={handleMetricClick}
             />
-    {/* Email Rev Share Card */}
-    <KPICard
-      title="Email Rev Share"
-      value={emailRevShare}
-      format="percentage"
-      delta={emailRevDelta !== undefined ? {
-        value: emailRevDelta,
-        isPositive: emailRevDelta >= 0
-      } : undefined}
-      sparkline={generateSparklineData()}
-      onCardClick={handleMetricClick}
-    />
+          {/* Email Rev Share Card */}
+            <KPICard
+              title="Email Rev Share"
+              value={emailRevShare}
+              format="percentage"
+              delta={emailRevDelta !== undefined ? {
+                value: emailRevDelta,
+                isPositive: emailRevDelta >= 0
+              } : undefined}
+              sparkline={generateSparklineData()}
+              onCardClick={handleMetricClick}
+            />
     
     
            
 
             <KPICard
               title="Campaign Rev"
-              value={mockToplineKPIs.cards.campaign_revenue}
+              value={campaignRevenue}
               format="currency"
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.campaign_revenue_pct,
-                isPositive: mockToplineKPIs.delta_prev.campaign_revenue_pct > 0
+              delta={compareEnabled && previousCampaignRevenue > 0 ? {
+                value: ((campaignRevenue - previousCampaignRevenue) / previousCampaignRevenue),
+                isPositive: campaignRevenue >= previousCampaignRevenue
               } : undefined}
               subtitle={
-                <>
-                  <span className="sm:hidden">{((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email</span>
-                  <span className="hidden sm:inline">{((mockToplineKPIs.cards.campaign_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue</span>
-                </>
+                totalEmailRevenue > 0 ? (
+                  <>
+                    <span className="sm:hidden">{((campaignRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email</span>
+                    <span className="hidden sm:inline">{((campaignRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email revenue</span>
+                  </>
+                ) : undefined
               }
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}
@@ -218,21 +268,21 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
             />
             <KPICard
               title="RPR"
-              value={mockToplineKPIs.cards.rpr.toFixed(2)}
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.rpr_pct,
-                isPositive: mockToplineKPIs.delta_prev.rpr_pct > 0
+              value={aggregateRPR.toFixed(2)}
+              delta={compareEnabled && previousAggregateRPR > 0 ? {
+                value: ((aggregateRPR - previousAggregateRPR) / previousAggregateRPR),
+                isPositive: aggregateRPR >= previousAggregateRPR
               } : undefined}
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="AOV"
-              value={mockToplineKPIs.cards.aov}
+              value={aggregateAOV}
               format="currency"
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.aov_pct,
-                isPositive: mockToplineKPIs.delta_prev.aov_pct > 0
+              delta={compareEnabled && previousAggregateAOV > 0 ? {
+                value: ((aggregateAOV - previousAggregateAOV) / previousAggregateAOV),
+                isPositive: aggregateAOV >= previousAggregateAOV
               } : undefined}
               onCardClick={handleMetricClick}
             />

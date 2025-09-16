@@ -170,7 +170,6 @@
 #                 average_order_value=0,
 #                 created_at=current_utc_time,
 #             )
-
 import logging
 from datetime import datetime, timezone
 from sqlalchemy.sql import text
@@ -203,7 +202,6 @@ class DatabaseService:
         finally:
             db.close()
 
-    
     @staticmethod
     def save_campaign_values_report(response, campaign_id, timeframe, conversion_metric_id=None, job_id=None):
         """
@@ -243,7 +241,6 @@ class DatabaseService:
                 )
             ).first()
             
-            # Use the passed conversion_metric_id if provided, otherwise try to get it from attributes
             if conversion_metric_id is None:
                 conversion_metric_id = attributes.get("conversion_metric_id", "")
             
@@ -349,6 +346,7 @@ class DatabaseService:
                 created_at=current_utc_time,
                 job_id=job_id.id if job_id else None
             )
+
     @staticmethod
     def create_new_job(type, channel, timeframe):
         """
@@ -360,7 +358,8 @@ class DatabaseService:
                 type=type,
                 channel=channel,
                 timeframe=timeframe,
-                created_at=get_current_utc_time()
+                created_at=get_current_utc_time(),
+                completed_at=None  # always start with NULL until marked finished
             )
             db.add(new_job)
             db.commit()
@@ -371,5 +370,51 @@ class DatabaseService:
             logger.error(f"Error creating new job in database: {e}")
             db.rollback()
             return None
+        finally:
+            db.close()
+
+    @staticmethod
+    def mark_job_completed(job_id: int):
+        """
+        Mark a campaign job as completed by setting completed_at to current UTC time.
+        """
+        db: Session = SessionLocal()
+        try:
+            job = db.query(CampaignJob).filter(CampaignJob.id == job_id).first()
+            if not job:
+                logger.warning(f"No job found with id={job_id}")
+                return None
+
+            job.completed_at = get_current_utc_time()
+            db.commit()
+            db.refresh(job)
+            logger.info(f"Job {job_id} marked as completed at {job.completed_at}")
+            return job
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error marking job {job_id} as completed: {e}")
+            return None
+        finally:
+            db.close()
+
+    @staticmethod
+    def get_completed_jobs(limit=10):
+        """
+        Fetch jobs that have been completed (completed_at IS NOT NULL).
+        """
+        db: Session = SessionLocal()
+        try:
+            jobs = (
+                db.query(CampaignJob)
+                .filter(CampaignJob.completed_at.isnot(None))
+                .order_by(CampaignJob.completed_at.desc())
+                .limit(limit)
+                .all()
+            )
+            logger.info(f"Found {len(jobs)} completed jobs")
+            return jobs
+        except Exception as e:
+            logger.error(f"Error fetching completed jobs: {e}")
+            return []
         finally:
             db.close()

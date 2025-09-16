@@ -12,6 +12,7 @@ export interface Campaign {
   status?: string; 
   createdAt?: string; 
   channel?: string;
+  type?: string;
   previous_revenue?: number; // Add this optional property
 
 }

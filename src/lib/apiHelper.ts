@@ -211,6 +211,19 @@
 import axios from "axios";
 import { Campaign } from "@/types/campaign";
 
+interface AggregateMetrics {
+  total_revenue: number;
+  total_recipients: number;
+  total_placed_orders: number;
+  aggregate_rpr: number;
+  aggregate_aov: number;
+  previous_total_revenue?: number;
+  previous_total_recipients?: number;
+  previous_total_placed_orders?: number;
+  previous_aggregate_rpr?: number;
+  previous_aggregate_aov?: number;
+}
+
 export const fetchCampaigns = async (timeframe: string = 'last_30_days'): Promise<Campaign[]> => {
   try {
     console.log(`Fetching campaigns for date range: ${timeframe}`);
@@ -230,5 +243,25 @@ export const fetchCampaigns = async (timeframe: string = 'last_30_days'): Promis
       data: err.response?.data,
     });
     return [];
+  }
+};
+
+export const fetchAggregateMetrics = async (timeframe: string = 'last_30_days'): Promise<AggregateMetrics | null> => {
+  try {
+    console.log(`Fetching aggregate metrics for timeframe: ${timeframe}`);
+    
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/campaigns/aggregate-metrics`, {
+      params: { timeframe }
+    });
+    
+    console.log('Aggregate metrics fetched:', response.data);
+    return response.data;
+  } catch (err: any) {
+    console.error("Failed to fetch aggregate metrics:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
   }
 };
