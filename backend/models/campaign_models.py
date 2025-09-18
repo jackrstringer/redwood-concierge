@@ -22,7 +22,8 @@ class Campaign(Base):
     relationships = Column(JSONB)
     links = Column(JSONB)
     raw_data = Column(JSONB)
-    channel = Column(String(10), nullable=True) 
+    channel = Column(String(10), nullable=True)
+    job_id = Column(Integer, nullable=True)
 
     def __repr__(self):
         return f"<Campaign(id={self.id}, name={self.name}, channel={self.channel})>"
@@ -44,6 +45,13 @@ class CampaignValuesReport(Base):
     click_rate = Column(Numeric)
     revenue_per_recipient = Column(Numeric)
     average_order_value = Column(Numeric)
+    # New fields
+    bounced_rate = Column(Numeric)
+    delivered = Column(Integer)
+    delivered_rate = Column(Numeric)
+    bounced = Column(Integer)
+    opens = Column(Integer)
+    clicks = Column(Integer)
     job_id = Column(Integer, nullable=True)
     created_at = Column(TIMESTAMP, nullable=True)
     updated_at = Column(TIMESTAMP, nullable=True)

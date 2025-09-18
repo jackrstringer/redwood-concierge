@@ -14,7 +14,7 @@ import {
   mockCampaigns,
   generateSparklineData,
 } from '@/data/mockData';
-import { fetchCampaigns, fetchAggregateMetrics } from '@/lib/apiHelper';
+import { fetchCampaigns, fetchAggregateMetrics, fetchFlowAggregateMetrics } from '@/lib/apiHelper';
 import { Campaign } from '@/types/campaign';
 
 const Index = () => {
@@ -33,6 +33,8 @@ const Index = () => {
   const [previousAggregateAOV, setPreviousAggregateAOV] = useState(0);
   const [campaignRevenue, setCampaignRevenue] = useState(0);
   const [previousCampaignRevenue, setPreviousCampaignRevenue] = useState(0);
+  const [flowRevenue, setFlowRevenue] = useState(0);
+  const [previousFlowRevenue, setPreviousFlowRevenue] = useState(0);
   
   // 🔹 Map current timeframe to its "previous" version
   const getPreviousRange = (range: string) => {
@@ -65,6 +67,27 @@ const Index = () => {
     }
   };
 
+  // 🔹 Load flow aggregate metrics
+  const loadFlowAggregateMetrics = async (dateRange: string = selectedDateRange) => {
+    try {
+      const flowMetrics = await fetchFlowAggregateMetrics(dateRange);
+      if (flowMetrics) {
+        setFlowRevenue(flowMetrics.total_revenue);
+        
+        if (compareEnabled && flowMetrics.previous_total_revenue !== undefined) {
+          setPreviousFlowRevenue(flowMetrics.previous_total_revenue);
+        } else {
+          setPreviousFlowRevenue(0);
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch flow aggregate metrics:', error);
+      // Fallback to 0 if API fails
+      setFlowRevenue(0);
+      setPreviousFlowRevenue(0);
+    }
+  };
+
   // 🔹 Load campaigns and handle compare logic
 const loadCampaigns = async (dateRange: string = selectedDateRange) => {
   try {
@@ -73,38 +96,24 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     const currentData = await fetchCampaigns(dateRange);
     setCampaigns(currentData);
     
-    // calculate total revenue from current data
-    const currentTotalRevenue = currentData.reduce(
-      (sum, c) => sum + (c.revenue || 0),
-      0
-    );
-    setTotalRevenue(currentTotalRevenue); // Set the total revenue state
+    // Total revenue calculation is handled in useEffect
     
-    // Calculate campaign revenue (average revenue for campaigns with type='campaign')
+    // Calculate campaign revenue (total revenue for campaigns with type='campaign')
     const campaignTypeData = currentData.filter(c => c.type === 'campaign');
-    const currentCampaignRevenue = campaignTypeData.length > 0
-      ? campaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0) / campaignTypeData.length
-      : 0;
+    const currentCampaignRevenue = campaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
     setCampaignRevenue(currentCampaignRevenue);
     
     // fetch previous only if compare is enabled
     if (compareEnabled) {
       const prevRange = getPreviousRange(dateRange);
       const prevData = await fetchCampaigns(prevRange);
-      const prevTotalRevenue = prevData.reduce(
-        (sum, c) => sum + (c.revenue || 0),
-        0
-      );
-      setPreviousRevenue(prevTotalRevenue);
+      // Previous revenue calculation is handled in useEffect
       
-      // Calculate previous campaign revenue (average revenue for campaigns with type='campaign')
+      // Calculate previous campaign revenue (total revenue for campaigns with type='campaign')
       const prevCampaignTypeData = prevData.filter(c => c.type === 'campaign');
-      const prevCampaignRevenue = prevCampaignTypeData.length > 0
-        ? prevCampaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0) / prevCampaignTypeData.length
-        : 0;
+      const prevCampaignRevenue = prevCampaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
       setPreviousCampaignRevenue(prevCampaignRevenue);
     } else {
-      setPreviousRevenue(0);
       setPreviousCampaignRevenue(0);
     }
   } catch (error: any) {
@@ -124,18 +133,38 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     // initial load
     loadCampaigns();
     loadAggregateMetrics();
+    loadFlowAggregateMetrics();
   }, []);
+
+  // Update total revenue when campaign or flow revenue changes
+  useEffect(() => {
+    const campaignTotalRevenue = campaigns.reduce((sum, c) => sum + (c.revenue || 0), 0);
+    setTotalRevenue(campaignTotalRevenue + flowRevenue);
+  }, [campaigns, flowRevenue]);
+
+  // Update previous revenue calculation
+  useEffect(() => {
+    if (compareEnabled) {
+      // Calculate previous campaign revenue
+      const prevCampaignRevenue = campaigns.reduce((sum, c) => sum + (c.previous_revenue || 0), 0);
+      setPreviousRevenue(prevCampaignRevenue + previousFlowRevenue);
+    } else {
+      setPreviousRevenue(0);
+    }
+  }, [campaigns, previousFlowRevenue, compareEnabled]);
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
     loadCampaigns(range);
     loadAggregateMetrics(range);
+    loadFlowAggregateMetrics(range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
     setCompareEnabled(enabled);
     loadCampaigns(selectedDateRange);
     loadAggregateMetrics(selectedDateRange);
+    loadFlowAggregateMetrics(selectedDateRange);
   };
 
   const handleMetricClick = (metric: any) => {
@@ -251,17 +280,19 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
             />
             <KPICard
               title="Flow Rev"
-              value={mockToplineKPIs.cards.flow_revenue}
+              value={flowRevenue}
               format="currency"
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.flow_revenue_pct,
-                isPositive: mockToplineKPIs.delta_prev.flow_revenue_pct > 0
+              delta={compareEnabled && previousFlowRevenue > 0 ? {
+                value: ((flowRevenue - previousFlowRevenue) / previousFlowRevenue),
+                isPositive: flowRevenue >= previousFlowRevenue
               } : undefined}
               subtitle={
-                <>
-                  <span className="sm:hidden">{((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email</span>
-                  <span className="hidden sm:inline">{((mockToplineKPIs.cards.flow_revenue / mockToplineKPIs.cards.email_revenue) * 100).toFixed(1)}% of email revenue</span>
-                </>
+                totalEmailRevenue > 0 ? (
+                  <>
+                    <span className="sm:hidden">{((flowRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email</span>
+                    <span className="hidden sm:inline">{((flowRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email revenue</span>
+                  </>
+                ) : undefined
               }
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}

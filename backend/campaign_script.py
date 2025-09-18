@@ -48,6 +48,7 @@ class Campaign(Base):
     links = Column(JSONB)
     raw_data = Column(JSONB)
     channel = Column(String(10), nullable=True)
+    
     def __repr__(self):
         return f"<Campaign(id={self.id}, type={self.type}, name={self.name}, status={self.status})>"
 

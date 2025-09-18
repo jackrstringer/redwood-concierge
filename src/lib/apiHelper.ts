@@ -224,6 +224,32 @@ interface AggregateMetrics {
   previous_aggregate_aov?: number;
 }
 
+interface Flow {
+  id: string;
+  updated_at: string;
+  name: string;
+  recipients: number;
+  open_rate: number;
+  click_rate: number;
+  revenue: number;
+  rpr: number;
+  aov: number;
+  status: string;
+  trigger_type: string;
+  previous_revenue?: number;
+}
+
+interface FlowAggregateMetrics {
+  total_revenue: number;
+  total_recipients: number;
+  aggregate_rpr: number;
+  aggregate_aov: number;
+  previous_total_revenue?: number;
+  previous_total_recipients?: number;
+  previous_aggregate_rpr?: number;
+  previous_aggregate_aov?: number;
+}
+
 export const fetchCampaigns = async (timeframe: string = 'last_30_days'): Promise<Campaign[]> => {
   try {
     console.log(`Fetching campaigns for date range: ${timeframe}`);
@@ -258,6 +284,48 @@ export const fetchAggregateMetrics = async (timeframe: string = 'last_30_days'):
     return response.data;
   } catch (err: any) {
     console.error("Failed to fetch aggregate metrics:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+export const fetchFlows = async (timeframe: string = 'last_30_days'): Promise<Flow[]> => {
+  try {
+    console.log(`Fetching flows for date range: ${timeframe}`);
+    
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flows`, {
+      params: { timeframe }
+    });
+    
+    const flows = response.data || [];
+    console.log(`Found ${flows.length} flows`);
+    
+    return flows;
+  } catch (err: any) {
+    console.error("Failed to fetch flows:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return [];
+  }
+};
+
+export const fetchFlowAggregateMetrics = async (timeframe: string = 'last_30_days'): Promise<FlowAggregateMetrics | null> => {
+  try {
+    console.log(`Fetching flow aggregate metrics for timeframe: ${timeframe}`);
+    
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flows/aggregate-metrics`, {
+      params: { timeframe }
+    });
+    
+    console.log('Flow aggregate metrics fetched:', response.data);
+    return response.data;
+  } catch (err: any) {
+    console.error("Failed to fetch flow aggregate metrics:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,

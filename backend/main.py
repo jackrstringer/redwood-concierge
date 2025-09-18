@@ -7,10 +7,11 @@ origins = [
     "http://localhost:8000",
 ]
 # Import after creating the app
-from api.routers import campaign
+from api.routers import campaign, flow
 
-# Include the router
+# Include the routers
 app.include_router(campaign.router, prefix="/api", tags=["campaigns"])
+app.include_router(flow.router, prefix="/api", tags=["flows"])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

@@ -1,10 +1,11 @@
+# backend/flow_value_report_script.py
+
 import logging
 import time
 import argparse
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 from core.database import SessionLocal, Base, engine
-from models.campaign_models import Campaign, CampaignValuesReport
+from models.flow_models import Flow, FlowValuesReport
 from services.api_service import APIService
 from services.database_service import DatabaseService
 from utils.helpers import get_environment_variables
@@ -18,13 +19,14 @@ def main(timeframe: str = "last_30_days"):
     
     Base.metadata.create_all(bind=engine)
     
-    campaign_ids = DatabaseService.get_top_campaign_ids(limit=2)
+    # get flows from DB (limit 10 like campaigns)
+    flow_ids = DatabaseService.get_top_flow_ids(limit=2)
     
-    if not campaign_ids:
-        logger.warning("No campaign IDs found in the database. Exiting.")
+    if not flow_ids:
+        logger.warning("No flow IDs found in the database. Exiting.")
         return
     
-    job_id = DatabaseService.create_new_job(type="campaign_values_report", channel="", timeframe=timeframe)
+    job_id = DatabaseService.create_new_job(type="flow_report_values", channel="", timeframe=timeframe)
     if not job_id:
         logger.error("Failed to create job. Exiting.")
         return
@@ -35,21 +37,27 @@ def main(timeframe: str = "last_30_days"):
     time.sleep(request_delay)
     
     try:
-        for i, campaign_id in enumerate(campaign_ids):
+        for i, flow_id in enumerate(flow_ids):
             try:
-                logger.info(f"Processing campaign ID: {campaign_id} ({i+1}/{len(campaign_ids)})")
+                logger.info(f"Processing flow ID: {flow_id} ({i+1}/{len(flow_ids)})")
                 
-                report = APIService.fetch_campaign_values_report(
-                    campaign_id=campaign_id,
+                # fetch report from API
+                report = APIService.fetch_flow_report_values(
+                    flow_id=flow_id,
                     timeframe=timeframe,
                     conversion_metric_id=env_vars["conversion_metric_id"]
                 )
 
-                DatabaseService.save_campaign_values_report(report, campaign_id, timeframe, conversion_metric_id=env_vars["conversion_metric_id"], job_id=job_id)
+                # save to DB
+                DatabaseService.save_flow_report_values(
+                    report, flow_id, timeframe,
+                    conversion_metric_id=env_vars["conversion_metric_id"],
+                    job_id=job_id
+                )
 
-                logger.info(f"Successfully processed campaign ID: {campaign_id}")
+                logger.info(f"Successfully processed flow ID: {flow_id}")
                 
-                if i < len(campaign_ids) - 1:
+                if i < len(flow_ids) - 1:
                     logger.info(f"Waiting {request_delay} seconds before next request...")
                     time.sleep(request_delay)
                     
@@ -57,26 +65,26 @@ def main(timeframe: str = "last_30_days"):
                 if "Daily rate limit exceeded" in str(e):
                     logger.error("Daily rate limit exceeded. Stopping processing for today.")
                     break
-                logger.error(f"Failed to process campaign ID {campaign_id}: {e}")
-                if i < len(campaign_ids) - 1:
+                logger.error(f"Failed to process flow ID {flow_id}: {e}")
+                if i < len(flow_ids) - 1:
                     logger.info(f"Waiting {request_delay} seconds before next request after error...")
                     time.sleep(request_delay)
     finally:
-        # Mark the job as completed, regardless of whether it completed successfully or with errors
+        # Mark the job as completed
         if job_id:
             logger.info(f"Marking job {job_id.id} as completed")
             DatabaseService.mark_job_completed(job_id.id)
             logger.info(f"Job {job_id.id} marked as completed")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Fetch campaign values report for specified timeframe")
+    parser = argparse.ArgumentParser(description="Fetch flow values report for specified timeframe")
     parser.add_argument(
         "--timeframe", 
         type=str, 
         default="last_30_days",
-        help="Timeframe for the campaign values report (default: last_30_days)"
+        help="Timeframe for the flow values report (default: last_30_days)"
     )
     
     args = parser.parse_args()
-    logger.info(f"Starting campaign values report script with timeframe: {args.timeframe}")
+    logger.info(f"Starting flow values report script with timeframe: {args.timeframe}")
     main(args.timeframe)

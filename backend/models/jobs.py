@@ -1,9 +1,9 @@
-from sqlalchemy import Column, String, DateTime, Boolean, Integer, func, text
-from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
+from sqlalchemy import Column, String, DateTime, Integer, text
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from core.database import Base
 
 class CampaignJob(Base):
-    __tablename__ = "campaign_jobs"
+    __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True, index=True)
     type = Column(String(50), nullable=False)
@@ -15,7 +15,6 @@ class CampaignJob(Base):
         nullable=False
     )
     completed_at = Column(
-    DateTime(timezone=True),
-    server_default=text("timezone('utc', now())"),
-    nullable=True
-)
+        DateTime(timezone=True),
+        nullable=True  # Remove server_default to keep it NULL until explicitly set
+    )

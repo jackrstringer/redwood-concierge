@@ -20,15 +20,13 @@ class Campaign(Base):
     scheduled_at = Column(DateTime)
     updated_at = Column(DateTime)
     send_time = Column(DateTime)
-
     audiences = Column(JSONB)
     send_options = Column(JSONB)
     tracking_options = Column(JSONB)
     send_strategy = Column(JSONB)
     relationships = Column(JSONB)
-
     raw_data = Column(JSONB) 
-
+    
 
     def __repr__(self):
         return f"<Campaign(id={self.id}, name={self.name}, status={self.status})>"
