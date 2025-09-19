@@ -45,10 +45,11 @@ class CampaignValuesReport(Base):
     click_rate = Column(Numeric)
     revenue_per_recipient = Column(Numeric)
     average_order_value = Column(Numeric)
+    placed_orders = Column(Numeric)
     # New fields
-    bounced_rate = Column(Numeric)
+    bounce_rate = Column(Numeric)
     delivered = Column(Integer)
-    delivered_rate = Column(Numeric)
+    delivery_rate = Column(Numeric)
     bounced = Column(Integer)
     opens = Column(Integer)
     clicks = Column(Integer)

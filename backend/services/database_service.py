@@ -8,6 +8,7 @@ from utils.helpers import get_current_utc_time
 from core.database import SessionLocal
 from models.campaign_models import Campaign, CampaignValuesReport
 from models.flow_models import Flow, FlowValuesReport
+from models.api_logs import APILog
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,14 @@ class DatabaseService:
             existing_report.click_rate = statistics.get("click_rate")
             existing_report.revenue_per_recipient = statistics.get("revenue_per_recipient")
             existing_report.average_order_value = statistics.get("average_order_value")
+            # Note: placed_orders not available from API, keeping existing value or NULL
+            # New fields
+            existing_report.opens = statistics.get("opens")
+            existing_report.clicks = statistics.get("clicks")
+            existing_report.bounced = statistics.get("bounced")
+            existing_report.bounce_rate = statistics.get("bounce_rate")
+            existing_report.delivered = statistics.get("delivered")
+            existing_report.delivery_rate = statistics.get("delivery_rate")
         else:
             existing_report.campaign_id = campaign_id
             existing_report.campaign_message_id = campaign_id
@@ -124,6 +133,14 @@ class DatabaseService:
             existing_report.click_rate = 0
             existing_report.revenue_per_recipient = 0
             existing_report.average_order_value = 0
+            # Note: placed_orders not available from API, leaving as NULL
+            # New fields defaults
+            existing_report.opens = 0
+            existing_report.clicks = 0
+            existing_report.bounced = 0
+            existing_report.bounce_rate = 0
+            existing_report.delivered = 0
+            existing_report.delivery_rate = 0
 
         existing_report.timeframe = timeframe 
         existing_report.conversion_metric_id = conversion_metric_id
@@ -154,6 +171,14 @@ class DatabaseService:
                 click_rate=statistics.get("click_rate"),
                 revenue_per_recipient=statistics.get("revenue_per_recipient"),
                 average_order_value=statistics.get("average_order_value"),
+                # Note: placed_orders not available from API, will be NULL
+                # New fields
+                opens=statistics.get("opens"),
+                clicks=statistics.get("clicks"),
+                bounced=statistics.get("bounced"),
+                bounce_rate=statistics.get("bounce_rate"),
+                delivered=statistics.get("delivered"),
+                delivery_rate=statistics.get("delivery_rate"),
                 created_at=current_utc_time,
                 job_id=job_id.id if job_id else None
             )
@@ -172,6 +197,14 @@ class DatabaseService:
                 click_rate=0,
                 revenue_per_recipient=0,
                 average_order_value=0,
+                # Note: placed_orders not available from API, will be NULL
+                # New fields defaults
+                opens=0,
+                clicks=0,
+                bounced=0,
+                bounce_rate=0,
+                delivered=0,
+                delivery_rate=0,
                 created_at=current_utc_time,
                 job_id=job_id.id if job_id else None
             )
@@ -334,7 +367,12 @@ class DatabaseService:
                 "click_rate": 0,
                 "recipients": 0,
                 "revenue_per_recipient": 0,
-                "average_order_value": 0
+                "average_order_value": 0,
+                "clicks": 0,
+                "bounced": 0,
+                "bounce_rate": 0,
+                "delivered": 0,
+                "delivery_rate": 0
             }
 
             total_recipients = 0
@@ -343,6 +381,11 @@ class DatabaseService:
             total_orders = 0
             weighted_unsubscribe_rate = 0
             weighted_click_rate = 0
+            weighted_bounce_rate = 0
+            weighted_delivery_rate = 0
+            total_clicks = 0
+            total_bounced = 0
+            total_delivered = 0
 
             for result in results:
                 groupings = result.get("groupings", {})
@@ -357,25 +400,39 @@ class DatabaseService:
                 # Extract stats safely
                 recipients = statistics.get("recipients", 0) or 0
                 opens = statistics.get("opens", 0) or 0
-                bounced = statistics.get("bounced_or_failed", 0) or 0
+                bounced_or_failed = statistics.get("bounced_or_failed", 0) or 0
                 unsub_rate = statistics.get("unsubscribe_rate", 0) or 0
                 click_rate = statistics.get("click_rate", 0) or 0
                 revenue_per_recipient = statistics.get("revenue_per_recipient", 0) or 0
                 avg_order_value = statistics.get("average_order_value", 0) or 0
+                # New fields
+                clicks = statistics.get("clicks", 0) or 0
+                bounced = statistics.get("bounced", 0) or 0
+                bounce_rate = statistics.get("bounce_rate", 0) or 0
+                delivered = statistics.get("delivered", 0) or 0
+                delivery_rate = statistics.get("delivery_rate", 0) or 0
 
                 # Aggregate totals
-                aggregated_stats["bounced_or_failed"] += bounced
+                aggregated_stats["bounced_or_failed"] += bounced_or_failed
                 aggregated_stats["opens"] += opens
                 aggregated_stats["recipients"] += recipients
+                aggregated_stats["clicks"] += clicks
+                aggregated_stats["bounced"] += bounced
+                aggregated_stats["delivered"] += delivered
 
                 total_recipients += recipients
                 total_opens += opens
                 total_revenue += revenue_per_recipient * recipients
+                total_clicks += clicks
+                total_bounced += bounced
+                total_delivered += delivered
 
                 # Weighted averages
                 if recipients > 0:
                     weighted_unsubscribe_rate += unsub_rate * recipients
                     weighted_click_rate += click_rate * recipients
+                    weighted_bounce_rate += bounce_rate * recipients
+                    weighted_delivery_rate += delivery_rate * recipients
                     if avg_order_value > 0:
                         total_orders += recipients * (revenue_per_recipient / avg_order_value)
 
@@ -384,6 +441,8 @@ class DatabaseService:
                 aggregated_stats["unsubscribe_rate"] = weighted_unsubscribe_rate / total_recipients
                 aggregated_stats["open_rate"] = total_opens / total_recipients
                 aggregated_stats["click_rate"] = weighted_click_rate / total_recipients
+                aggregated_stats["bounce_rate"] = weighted_bounce_rate / total_recipients
+                aggregated_stats["delivery_rate"] = weighted_delivery_rate / total_recipients
                 aggregated_stats["revenue_per_recipient"] = total_revenue / total_recipients
                 if total_orders > 0:
                     aggregated_stats["average_order_value"] = total_revenue / total_orders
@@ -409,6 +468,12 @@ class DatabaseService:
                 existing_report.recipients = int(aggregated_stats["recipients"])
                 existing_report.revenue_per_recipient = aggregated_stats["revenue_per_recipient"]
                 existing_report.average_order_value = aggregated_stats["average_order_value"]
+                # New fields
+                existing_report.clicks = int(aggregated_stats["clicks"])
+                existing_report.bounced = int(aggregated_stats["bounced"])
+                existing_report.bounce_rate = aggregated_stats["bounce_rate"]
+                existing_report.delivered = int(aggregated_stats["delivered"])
+                existing_report.delivery_rate = aggregated_stats["delivery_rate"]
                 existing_report.raw_data = report_data
                 existing_report.updated_at = current_time
                 existing_report.job_id = job_id.id if job_id else None
@@ -428,6 +493,12 @@ class DatabaseService:
                     recipients=int(aggregated_stats["recipients"]),
                     revenue_per_recipient=aggregated_stats["revenue_per_recipient"],
                     average_order_value=aggregated_stats["average_order_value"],
+                    # New fields
+                    clicks=int(aggregated_stats["clicks"]),
+                    bounced=int(aggregated_stats["bounced"]),
+                    bounce_rate=aggregated_stats["bounce_rate"],
+                    delivered=int(aggregated_stats["delivered"]),
+                    delivery_rate=aggregated_stats["delivery_rate"],
                     raw_data=report_data,
                     created_at=current_time,
                     updated_at=current_time
@@ -445,5 +516,30 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Error saving flow report for flow_id {flow_id}: {e}")
             db.rollback()
+        finally:
+            db.close()
+
+        # --- API LOG METHODS ---
+    @staticmethod
+    def log_api_call(status: str, response_body: dict = None):
+        """
+        Store an API log entry in the database.
+        """
+        db: Session = SessionLocal()
+        try:
+            log_entry = APILog(
+                status=status,
+                response_body=response_body,
+                created_at=get_current_utc_time()
+            )
+            db.add(log_entry)
+            db.commit()
+            db.refresh(log_entry)
+            logger.info(f"API log saved with id={log_entry.id}, status={status}")
+            return log_entry
+        except Exception as e:
+            logger.error(f"Error saving API log: {e}")
+            db.rollback()
+            return None
         finally:
             db.close()

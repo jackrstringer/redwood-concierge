@@ -72,7 +72,7 @@ async def get_flows(
                     frv.recipients,
                     frv.open_rate,
                     frv.click_rate,
-                    (frv.recipients * frv.revenue_per_recipient) AS revenue,
+                    (frv.delivered * frv.revenue_per_recipient) AS revenue,
                     frv.revenue_per_recipient,
                     frv.average_order_value,
                     frv.clicks,
@@ -105,7 +105,7 @@ async def get_flows(
                     frv.recipients,
                     frv.open_rate,
                     frv.click_rate,
-                    (frv.recipients * frv.revenue_per_recipient) AS revenue,
+                    (frv.delivered * frv.revenue_per_recipient) AS revenue,
                     frv.revenue_per_recipient,
                     frv.average_order_value,
                     frv.clicks,
@@ -180,7 +180,7 @@ async def get_flow_aggregate_metrics(
         # Get current period aggregates
         current_query = text("""
             SELECT 
-                SUM(frv.recipients * frv.revenue_per_recipient) AS total_revenue,
+                SUM(frv.delivered * frv.revenue_per_recipient) AS total_revenue,
                 SUM(frv.recipients) AS total_recipients,
                 -- Simple average RPR for the timeframe
                 AVG(frv.revenue_per_recipient) AS avg_revenue_per_recipient,
@@ -217,7 +217,7 @@ async def get_flow_aggregate_metrics(
         if prev_timeframe:
             prev_query = text("""
                 SELECT 
-                    SUM(frv.recipients * frv.revenue_per_recipient) AS total_revenue,
+                    SUM(frv.delivered * frv.revenue_per_recipient) AS total_revenue,
                     SUM(frv.recipients) AS total_recipients,
                     -- Simple average RPR for the timeframe
                     AVG(frv.revenue_per_recipient) AS avg_revenue_per_recipient,

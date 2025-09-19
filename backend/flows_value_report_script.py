@@ -1,4 +1,4 @@
-# backend/flow_value_report_script.py
+# backend/flows_value_report_script.py
 
 import logging
 import time
@@ -14,25 +14,29 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def main(timeframe: str = "last_30_days"):
+def run_flow_values_report(timeframe: str = "last_30_days"):
+    """Main process to fetch and save flow values report"""
     env_vars = get_environment_variables()
     
+    # ensure tables exist
     Base.metadata.create_all(bind=engine)
     
-    # get flows from DB (limit 10 like campaigns)
+    # get flows from DB (limit same as campaigns)
     flow_ids = DatabaseService.get_top_flow_ids(limit=2)
     
     if not flow_ids:
         logger.warning("No flow IDs found in the database. Exiting.")
         return
     
-    job_id = DatabaseService.create_new_job(type="flow_report_values", channel="", timeframe=timeframe)
+    # create a job record
+    job_id = DatabaseService.create_new_job(
+        type="flow_report_values", channel="", timeframe=timeframe
+    )
     if not job_id:
         logger.error("Failed to create job. Exiting.")
         return
 
     request_delay = 30
-    
     logger.info("Waiting 30 seconds before starting requests...")
     time.sleep(request_delay)
     
@@ -48,7 +52,7 @@ def main(timeframe: str = "last_30_days"):
                     conversion_metric_id=env_vars["conversion_metric_id"]
                 )
 
-                # save to DB
+                # save to DB (keeps existing data for other timeframes intact)
                 DatabaseService.save_flow_report_values(
                     report, flow_id, timeframe,
                     conversion_metric_id=env_vars["conversion_metric_id"],
@@ -70,11 +74,12 @@ def main(timeframe: str = "last_30_days"):
                     logger.info(f"Waiting {request_delay} seconds before next request after error...")
                     time.sleep(request_delay)
     finally:
-        # Mark the job as completed
+        # Mark job as completed
         if job_id:
             logger.info(f"Marking job {job_id.id} as completed")
             DatabaseService.mark_job_completed(job_id.id)
             logger.info(f"Job {job_id.id} marked as completed")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch flow values report for specified timeframe")
@@ -82,9 +87,9 @@ if __name__ == "__main__":
         "--timeframe", 
         type=str, 
         default="last_30_days",
-        help="Timeframe for the flow values report (default: last_30_days)"
+        help="Timeframe for the flow values report (e.g. last_7_days, last_30_days)"
     )
     
     args = parser.parse_args()
     logger.info(f"Starting flow values report script with timeframe: {args.timeframe}")
-    main(args.timeframe)
+    run_flow_values_report(args.timeframe)

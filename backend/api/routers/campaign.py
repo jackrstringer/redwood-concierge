@@ -30,10 +30,9 @@ class CampaignResponse(BaseModel):
     channel: Optional[str] = None
     type: Optional[str] = None
     previous_revenue: Optional[float] = None
-    # New fields
-    bounced_rate: Optional[float] = 0.0
+    bounce_rate: Optional[float] = 0.0
     delivered: Optional[int] = 0
-    delivered_rate: Optional[float] = 0.0
+    delivery_rate: Optional[float] = 0.0
     bounced: Optional[int] = 0
     opens: Optional[int] = 0
     clicks: Optional[int] = 0
@@ -42,8 +41,8 @@ class AggregateMetricsResponse(BaseModel):
     total_revenue: Optional[float] = 0.0
     total_recipients: Optional[int] = 0
     total_placed_orders: Optional[int] = 0
-    aggregate_rpr: Optional[float] = 0.0  # Total Revenue / Total Recipients
-    aggregate_aov: Optional[float] = 0.0  # Total Revenue / Total Placed Orders
+    aggregate_rpr: Optional[float] = 0.0  
+    aggregate_aov: Optional[float] = 0.0  
     previous_total_revenue: Optional[float] = None
     previous_total_recipients: Optional[int] = None
     previous_total_placed_orders: Optional[int] = None
@@ -77,13 +76,13 @@ async def get_campaigns(
                     crv.recipients,
                     crv.open_rate,
                     crv.click_rate,
-                    (crv.recipients * crv.revenue_per_recipient) AS revenue,
+                    (crv.delivered * crv.revenue_per_recipient) AS revenue,
                     crv.revenue_per_recipient,
                     crv.average_order_value,
                     crv.placed_orders,
-                    crv.bounced_rate,
+                    crv.bounce_rate,
                     crv.delivered,
-                    crv.delivered_rate,
+                    crv.delivery_rate,
                     crv.bounced,
                     crv.opens,
                     crv.clicks,
@@ -112,13 +111,13 @@ async def get_campaigns(
                     crv.recipients,
                     crv.open_rate,
                     crv.click_rate,
-                    (crv.recipients * crv.revenue_per_recipient) AS revenue,
+                    (crv.delivered * crv.revenue_per_recipient) AS revenue,
                     crv.revenue_per_recipient,
                     crv.average_order_value,
                     crv.placed_orders,
-                    crv.bounced_rate,
+                    crv.bounce_rate,
                     crv.delivered,
-                    crv.delivered_rate,
+                    crv.delivery_rate,
                     crv.bounced,
                     crv.opens,
                     crv.clicks
@@ -148,10 +147,9 @@ async def get_campaigns(
                 "placed_orders": float(row.placed_orders) if row.placed_orders is not None else 0.0,
                 "channel": row.channel if row.channel is not None else None,
                 "type": row.type if row.type is not None else None,
-                # New fields
-                "bounced_rate": float(row.bounced_rate) if row.bounced_rate is not None else 0.0,
+                "bounce_rate": float(row.bounce_rate) if row.bounce_rate is not None else 0.0,
                 "delivered": int(row.delivered) if row.delivered is not None else 0,
-                "delivered_rate": float(row.delivered_rate) if row.delivered_rate is not None else 0.0,
+                "delivery_rate": float(row.delivery_rate) if row.delivery_rate is not None else 0.0,
                 "bounced": int(row.bounced) if row.bounced is not None else 0,
                 "opens": int(row.opens) if row.opens is not None else 0,
                 "clicks": int(row.clicks) if row.clicks is not None else 0
@@ -191,7 +189,7 @@ async def get_aggregate_metrics(
         # Get current period aggregates with simple averages
         current_query = text("""
             SELECT 
-                SUM(crv.recipients * crv.revenue_per_recipient) AS total_revenue,
+                SUM(crv.delivered * crv.revenue_per_recipient) AS total_revenue,
                 SUM(crv.recipients) AS total_recipients,
                 SUM(crv.placed_orders) AS total_placed_orders,
                 -- Simple average RPR for the timeframe
@@ -229,7 +227,7 @@ async def get_aggregate_metrics(
         if prev_timeframe:
             prev_query = text("""
                 SELECT 
-                    SUM(crv.recipients * crv.revenue_per_recipient) AS total_revenue,
+                    SUM(crv.delivered * crv.revenue_per_recipient) AS total_revenue,
                     SUM(crv.recipients) AS total_recipients,
                     SUM(crv.placed_orders) AS total_placed_orders,
                     -- Simple average RPR for the timeframe
