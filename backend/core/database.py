@@ -25,7 +25,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:123@192
 
 engine = create_engine(
     DATABASE_URL,
-    echo=True,
+    echo=False,
     connect_args={"options": "-c timezone=utc"}  
 )
 

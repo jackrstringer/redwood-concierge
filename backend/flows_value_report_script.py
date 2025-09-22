@@ -22,7 +22,7 @@ def run_flow_values_report(timeframe: str = "last_30_days"):
     Base.metadata.create_all(bind=engine)
     
     # get flows from DB (limit same as campaigns)
-    flow_ids = DatabaseService.get_top_flow_ids(limit=2)
+    flow_ids = DatabaseService.get_top_flow_ids()
     
     if not flow_ids:
         logger.warning("No flow IDs found in the database. Exiting.")

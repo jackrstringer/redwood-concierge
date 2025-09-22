@@ -59,9 +59,19 @@ class APIService:
             response = requests.post(CAMPAIGN_BASE_URL, json=payload, headers=headers)
 
             # Log API call
+            try:
+                response_data = response.json() if response.headers.get("Content-Type") == "application/json" else {"raw": response.text}
+            except:
+                response_data = {"raw": response.text}
+            
             DatabaseService.log_api_call(
-                status=str(response.status_code),
-                response_body=response.json() if response.headers.get("Content-Type") == "application/json" else {"raw": response.text}
+                status="success" if response.status_code == 200 else "error",
+                endpoint=CAMPAIGN_BASE_URL,
+                script_name="campaign_value_report_script",
+                status_code=response.status_code,
+                request_body=payload,
+                response_body=response_data,
+                error_message=response.text if response.status_code >= 400 else None
             )
 
             if response.status_code == 429:
@@ -138,9 +148,19 @@ class APIService:
             response = requests.post(FLOW_BASE_URL, headers=headers, json=body)
 
             # Log API call
+            try:
+                response_data = response.json() if response.headers.get("Content-Type") == "application/json" else {"raw": response.text}
+            except:
+                response_data = {"raw": response.text}
+            
             DatabaseService.log_api_call(
-                status=str(response.status_code),
-                response_body=response.json() if response.headers.get("Content-Type") == "application/json" else {"raw": response.text}
+                status="success" if response.status_code == 200 else "error",
+                endpoint=FLOW_BASE_URL,
+                script_name="flows_value_report_script",
+                status_code=response.status_code,
+                request_body=body,
+                response_body=response_data,
+                error_message=response.text if response.status_code >= 400 else None
             )
 
             if response.status_code == 429:

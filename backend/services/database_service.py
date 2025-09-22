@@ -15,23 +15,24 @@ logger = logging.getLogger(__name__)
 class DatabaseService:
     # --- CAMPAIGNS METHODS ---
     @staticmethod
-    def get_top_campaign_ids(limit=2):
+    def get_top_campaign_ids():
         """
-        Get top campaign IDs from the database where status = 'Sent'
+        Get all campaign IDs from the database (no status filter).
         """
         db: Session = SessionLocal()
         try:
             from sqlalchemy import select
-            stmt = select(Campaign.id).where(Campaign.status == "Sent")
+            stmt = select(Campaign.id)   # removed the WHERE condition
             result = db.execute(stmt).fetchall()
             campaign_ids = [row[0] for row in result]
-            logger.info(f"Found {len(campaign_ids)} campaign IDs with status='Sent'")
+            logger.info(f"Found {len(campaign_ids)} campaign IDs")
             return campaign_ids
         except Exception as e:
             logger.error(f"Error fetching campaign IDs: {e}")
             return []
         finally:
             db.close()
+
 
     @staticmethod
     def save_campaign_values_report(response, campaign_id, timeframe, conversion_metric_id=None, job_id=None):
@@ -87,7 +88,7 @@ class DatabaseService:
                     campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time, job_id
                 )
                 db.add(report)
-                db.flush()  # 🔑 ensures created_at is written immediately
+                db.flush() 
                 logger.info(f"Added new report for campaign_message_id {campaign_message_id} / timeframe {timeframe}")
 
             db.commit()
@@ -115,8 +116,6 @@ class DatabaseService:
             existing_report.click_rate = statistics.get("click_rate")
             existing_report.revenue_per_recipient = statistics.get("revenue_per_recipient")
             existing_report.average_order_value = statistics.get("average_order_value")
-            # Note: placed_orders not available from API, keeping existing value or NULL
-            # New fields
             existing_report.opens = statistics.get("opens")
             existing_report.clicks = statistics.get("clicks")
             existing_report.bounced = statistics.get("bounced")
@@ -133,8 +132,6 @@ class DatabaseService:
             existing_report.click_rate = 0
             existing_report.revenue_per_recipient = 0
             existing_report.average_order_value = 0
-            # Note: placed_orders not available from API, leaving as NULL
-            # New fields defaults
             existing_report.opens = 0
             existing_report.clicks = 0
             existing_report.bounced = 0
@@ -272,7 +269,7 @@ class DatabaseService:
             db.close()
 
     @staticmethod
-    def get_completed_jobs(limit=2):
+    def get_completed_jobs():
         """
         Fetch jobs that have been completed (completed_at IS NOT NULL).
         """
@@ -294,7 +291,7 @@ class DatabaseService:
 
     # --- FLOWS METHODS ---
     @staticmethod
-    def get_top_flow_ids(limit=2):
+    def get_top_flow_ids():
         """
         Get top flow IDs from the database ordered by creation date
         """
@@ -521,21 +518,27 @@ class DatabaseService:
 
         # --- API LOG METHODS ---
     @staticmethod
-    def log_api_call(status: str, response_body: dict = None):
+    def log_api_call(status: str, endpoint: str, script_name: str = None, status_code: int = None, 
+                     request_body: dict = None, response_body: dict = None, error_message: str = None):
         """
         Store an API log entry in the database.
         """
         db: Session = SessionLocal()
         try:
             log_entry = APILog(
+                script_name=script_name,
+                endpoint=endpoint,
+                status_code=status_code,
                 status=status,
+                request_body=request_body,
                 response_body=response_body,
+                error_message=error_message,
                 created_at=get_current_utc_time()
             )
             db.add(log_entry)
             db.commit()
             db.refresh(log_entry)
-            logger.info(f"API log saved with id={log_entry.id}, status={status}")
+            logger.info(f"API log saved with id={log_entry.id}, endpoint={endpoint}, status={status}")
             return log_entry
         except Exception as e:
             logger.error(f"Error saving API log: {e}")

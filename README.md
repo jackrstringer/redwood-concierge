@@ -76,3 +76,12 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 - python -m campaign_value_report_script ....> post in campaign_value_report
 - python -m campaign_script ....> post in campaign
 - uvicorn main:app --host localhost --port 3001 --reload
+
+## script cmd
+python -m campaign_value_report_script --timeframe last_7_days
+
+python -m campaign_value_report_script
+
+python -m flows_value_report_script
+
+python -m flows_value_report_script --timeframe last_7_days

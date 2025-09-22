@@ -22,7 +22,7 @@ def run_campaign_values_report(timeframe: str = "last_30_days"):
     Base.metadata.create_all(bind=engine)
     
     # get campaigns from DB
-    campaign_ids = DatabaseService.get_top_campaign_ids(limit=2)
+    campaign_ids = DatabaseService.get_top_campaign_ids()
     
     if not campaign_ids:
         logger.warning("No campaign IDs found in the database. Exiting.")

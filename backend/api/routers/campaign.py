@@ -18,7 +18,7 @@ router = APIRouter()
 # In your FastAPI backend
 class CampaignResponse(BaseModel):
     id: str
-    updated_at: str
+    updated_at: datetime
     name: str
     recipients: Optional[int] = 0
     open_rate: Optional[float] = 0.0
