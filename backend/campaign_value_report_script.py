@@ -18,15 +18,24 @@ def run_campaign_values_report(timeframe: str = "last_30_days"):
     """Main process to fetch and save campaign values report"""
     env_vars = get_environment_variables()
     
+    logger.info(f"Starting campaign values report processing for timeframe: {timeframe}")
+    logger.info(f"This will fetch campaigns sent within the {timeframe} period")
+    
     # ensure tables exist
     Base.metadata.create_all(bind=engine)
     
-    # get campaigns from DB
-    campaign_ids = DatabaseService.get_top_campaign_ids()
+    # get campaigns from DB based on timeframe
+    campaign_ids = DatabaseService.get_campaign_ids_by_timeframe(timeframe)
     
     if not campaign_ids:
-        logger.warning("No campaign IDs found in the database. Exiting.")
+        logger.warning(f"No campaign IDs found for timeframe '{timeframe}'. Exiting.")
+        logger.info("Possible reasons:")
+        logger.info("1. No campaigns were sent during this period")
+        logger.info("2. Campaign send_time data might be missing or in wrong format")
+        logger.info("3. You may need to extend the date range")
         return
+    
+    logger.info(f"Processing {len(campaign_ids)} campaigns found for timeframe: {timeframe}")
     
     # create a job record
     job_id = DatabaseService.create_new_job(

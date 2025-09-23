@@ -36,6 +36,23 @@ class CampaignResponse(BaseModel):
     bounced: Optional[int] = 0
     opens: Optional[int] = 0
     clicks: Optional[int] = 0
+    # Additional new statistics fields
+    bounced_or_failed: Optional[int] = 0
+    bounced_or_failed_rate: Optional[float] = 0.0
+    click_to_open_rate: Optional[float] = 0.0
+    clicks_unique: Optional[int] = 0
+    conversion_rate: Optional[float] = 0.0
+    conversion_uniques: Optional[int] = 0
+    conversion_value: Optional[float] = 0.0
+    conversions: Optional[int] = 0
+    failed: Optional[int] = 0
+    failed_rate: Optional[float] = 0.0
+    opens_unique: Optional[int] = 0
+    spam_complaint_rate: Optional[float] = 0.0
+    spam_complaints: Optional[int] = 0
+    unsubscribe_rate: Optional[float] = 0.0
+    unsubscribe_uniques: Optional[int] = 0
+    unsubscribes: Optional[int] = 0
 
 class AggregateMetricsResponse(BaseModel):
     total_revenue: Optional[float] = 0.0
@@ -269,4 +286,91 @@ async def get_aggregate_metrics(
         raise HTTPException(
             status_code=500, 
             detail=f"An error occurred while fetching aggregate metrics: {str(e)}"
+        )
+
+class CombinedAggregateMetricsResponse(BaseModel):
+    total_revenue: Optional[float] = 0.0
+    total_recipients: Optional[int] = 0
+    total_placed_orders: Optional[int] = 0
+    aggregate_rpr: Optional[float] = 0.0  
+    aggregate_aov: Optional[float] = 0.0  
+    campaign_aggregate_rpr: Optional[float] = 0.0
+    campaign_aggregate_aov: Optional[float] = 0.0
+    flow_aggregate_rpr: Optional[float] = 0.0
+    flow_aggregate_aov: Optional[float] = 0.0
+    previous_total_revenue: Optional[float] = None
+    previous_total_recipients: Optional[int] = None
+    previous_total_placed_orders: Optional[int] = None
+    previous_aggregate_rpr: Optional[float] = None
+    previous_aggregate_aov: Optional[float] = None
+
+
+@router.get("/combined-aggregate-metrics", response_model=CombinedAggregateMetricsResponse)
+async def get_combined_aggregate_metrics(
+    timeframe: str = Query("timeframe"),
+    db: Session = Depends(get_db)
+):
+    """Get combined aggregate metrics from both campaigns and flows"""
+    try:
+        logger.info(f"Fetching combined aggregate metrics for timeframe: {timeframe}")
+        
+        # Determine previous timeframe
+        prev_timeframe = None
+        if timeframe == 'last_7_days':
+            prev_timeframe = 'previous_7_days'
+        elif timeframe == 'last_30_days':
+            prev_timeframe = 'previous_30_days'
+        
+        # ✅ Combined query for simple average RPR & AOV
+        combined_query = text("""
+            SELECT 
+                AVG(rpr)  AS avg_rpr,
+                AVG(aov)  AS avg_aov
+            FROM (
+                SELECT 
+                    crv.revenue_per_recipient AS rpr,
+                    crv.average_order_value AS aov
+                FROM campaign_report_values crv
+                WHERE crv.timeframe = :timeframe
+
+                UNION ALL
+
+                SELECT 
+                    frv.revenue_per_recipient AS rpr,
+                    frv.average_order_value AS aov
+                FROM flow_report_values frv
+                WHERE frv.timeframe = :timeframe
+            ) AS data
+        """)
+        
+        combined_result = db.execute(combined_query, {"timeframe": timeframe}).fetchone()
+        
+        # Extract combined values
+        combined_rpr = float(combined_result.avg_rpr) if combined_result and combined_result.avg_rpr is not None else 0.0
+        combined_aov = float(combined_result.avg_aov) if combined_result and combined_result.avg_aov is not None else 0.0
+
+        response_data = {
+            "aggregate_rpr": combined_rpr,
+            "aggregate_aov": combined_aov,
+        }
+        
+        # ✅ Get previous timeframe if available
+        if prev_timeframe:
+            prev_result = db.execute(combined_query, {"timeframe": prev_timeframe}).fetchone()
+            prev_rpr = float(prev_result.avg_rpr) if prev_result and prev_result.avg_rpr is not None else 0.0
+            prev_aov = float(prev_result.avg_aov) if prev_result and prev_result.avg_aov is not None else 0.0
+            
+            response_data.update({
+                "previous_aggregate_rpr": prev_rpr,
+                "previous_aggregate_aov": prev_aov
+            })
+        
+        logger.info(f"Successfully calculated simple averages: RPR={combined_rpr:.4f}, AOV={combined_aov:.2f}")
+        return CombinedAggregateMetricsResponse(**response_data)
+    
+    except Exception as e:
+        logger.error(f"Error fetching combined aggregate metrics: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An error occurred while fetching combined aggregate metrics: {str(e)}"
         )

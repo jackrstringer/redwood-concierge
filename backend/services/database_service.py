@@ -33,6 +33,54 @@ class DatabaseService:
         finally:
             db.close()
 
+    @staticmethod
+    def get_campaign_ids_by_timeframe(timeframe: str):
+        """
+        Get campaign IDs based on timeframe using send_time filtering.
+        
+        Args:
+            timeframe (str): 'last_7_days' or 'last_30_days'
+            
+        Returns:
+            list: List of campaign IDs that were sent within the timeframe
+        """
+        db: Session = SessionLocal()
+        try:
+            if timeframe == "last_7_days":
+                query = text("""
+                    SELECT id FROM campaigns
+                    WHERE send_time BETWEEN (NOW() AT TIME ZONE 'UTC' - INTERVAL '7 days')
+                                        AND (NOW() AT TIME ZONE 'UTC')
+                    ORDER BY send_time DESC
+                """)
+            elif timeframe == "last_30_days":
+                query = text("""
+                    SELECT id FROM campaigns
+                    WHERE send_time BETWEEN (NOW() AT TIME ZONE 'UTC' - INTERVAL '30 days')
+                                        AND (NOW() AT TIME ZONE 'UTC')
+                    ORDER BY send_time DESC
+                """)
+            else:
+                logger.warning(f"Unknown timeframe '{timeframe}', falling back to all campaigns")
+                return DatabaseService.get_top_campaign_ids()
+            
+            result = db.execute(query).fetchall()
+            campaign_ids = [row[0] for row in result]
+            logger.info(f"Found {len(campaign_ids)} campaign IDs for timeframe '{timeframe}'")
+            
+            if not campaign_ids:
+                logger.warning(f"No campaigns found for timeframe '{timeframe}'. You may want to check the send_time data or extend the date range.")
+            
+            return campaign_ids
+            
+        except Exception as e:
+            logger.error(f"Error fetching campaign IDs for timeframe '{timeframe}': {e}")
+            # Fallback to the original method if there's an error
+            logger.info("Falling back to get_top_campaign_ids()")
+            return DatabaseService.get_top_campaign_ids()
+        finally:
+            db.close()
+
 
     @staticmethod
     def save_campaign_values_report(response, campaign_id, timeframe, conversion_metric_id=None, job_id=None):
@@ -122,6 +170,23 @@ class DatabaseService:
             existing_report.bounce_rate = statistics.get("bounce_rate")
             existing_report.delivered = statistics.get("delivered")
             existing_report.delivery_rate = statistics.get("delivery_rate")
+            # Additional new statistics fields
+            existing_report.bounced_or_failed = statistics.get("bounced_or_failed")
+            existing_report.bounced_or_failed_rate = statistics.get("bounced_or_failed_rate")
+            existing_report.click_to_open_rate = statistics.get("click_to_open_rate")
+            existing_report.clicks_unique = statistics.get("clicks_unique")
+            existing_report.conversion_rate = statistics.get("conversion_rate")
+            existing_report.conversion_uniques = statistics.get("conversion_uniques")
+            existing_report.conversion_value = statistics.get("conversion_value")
+            existing_report.conversions = statistics.get("conversions")
+            existing_report.failed = statistics.get("failed")
+            existing_report.failed_rate = statistics.get("failed_rate")
+            existing_report.opens_unique = statistics.get("opens_unique")
+            existing_report.spam_complaint_rate = statistics.get("spam_complaint_rate")
+            existing_report.spam_complaints = statistics.get("spam_complaints")
+            existing_report.unsubscribe_rate = statistics.get("unsubscribe_rate")
+            existing_report.unsubscribe_uniques = statistics.get("unsubscribe_uniques")
+            existing_report.unsubscribes = statistics.get("unsubscribes")
         else:
             existing_report.campaign_id = campaign_id
             existing_report.campaign_message_id = campaign_id
@@ -138,6 +203,23 @@ class DatabaseService:
             existing_report.bounce_rate = 0
             existing_report.delivered = 0
             existing_report.delivery_rate = 0
+            # Additional new statistics fields defaults
+            existing_report.bounced_or_failed = 0
+            existing_report.bounced_or_failed_rate = 0
+            existing_report.click_to_open_rate = 0
+            existing_report.clicks_unique = 0
+            existing_report.conversion_rate = 0
+            existing_report.conversion_uniques = 0
+            existing_report.conversion_value = 0
+            existing_report.conversions = 0
+            existing_report.failed = 0
+            existing_report.failed_rate = 0
+            existing_report.opens_unique = 0
+            existing_report.spam_complaint_rate = 0
+            existing_report.spam_complaints = 0
+            existing_report.unsubscribe_rate = 0
+            existing_report.unsubscribe_uniques = 0
+            existing_report.unsubscribes = 0
 
         existing_report.timeframe = timeframe 
         existing_report.conversion_metric_id = conversion_metric_id
@@ -176,6 +258,23 @@ class DatabaseService:
                 bounce_rate=statistics.get("bounce_rate"),
                 delivered=statistics.get("delivered"),
                 delivery_rate=statistics.get("delivery_rate"),
+                # Additional new statistics fields
+                bounced_or_failed=statistics.get("bounced_or_failed"),
+                bounced_or_failed_rate=statistics.get("bounced_or_failed_rate"),
+                click_to_open_rate=statistics.get("click_to_open_rate"),
+                clicks_unique=statistics.get("clicks_unique"),
+                conversion_rate=statistics.get("conversion_rate"),
+                conversion_uniques=statistics.get("conversion_uniques"),
+                conversion_value=statistics.get("conversion_value"),
+                conversions=statistics.get("conversions"),
+                failed=statistics.get("failed"),
+                failed_rate=statistics.get("failed_rate"),
+                opens_unique=statistics.get("opens_unique"),
+                spam_complaint_rate=statistics.get("spam_complaint_rate"),
+                spam_complaints=statistics.get("spam_complaints"),
+                unsubscribe_rate=statistics.get("unsubscribe_rate"),
+                unsubscribe_uniques=statistics.get("unsubscribe_uniques"),
+                unsubscribes=statistics.get("unsubscribes"),
                 created_at=current_utc_time,
                 job_id=job_id.id if job_id else None
             )
@@ -202,6 +301,23 @@ class DatabaseService:
                 bounce_rate=0,
                 delivered=0,
                 delivery_rate=0,
+                # Additional new statistics fields defaults
+                bounced_or_failed=0,
+                bounced_or_failed_rate=0,
+                click_to_open_rate=0,
+                clicks_unique=0,
+                conversion_rate=0,
+                conversion_uniques=0,
+                conversion_value=0,
+                conversions=0,
+                failed=0,
+                failed_rate=0,
+                opens_unique=0,
+                spam_complaint_rate=0,
+                spam_complaints=0,
+                unsubscribe_rate=0,
+                unsubscribe_uniques=0,
+                unsubscribes=0,
                 created_at=current_utc_time,
                 job_id=job_id.id if job_id else None
             )
@@ -324,35 +440,24 @@ class DatabaseService:
 
             logger.info(f"Processing {len(results)} results for flow_id {flow_id}")
 
-            # Fallback save if no results
+            # Skip saving if no results
             if not results:
-                logger.warning(f"No results found for flow_id {flow_id}")
-                current_time = get_current_utc_time()
-                existing_report = db.query(FlowValuesReport).filter(
-                    and_(
-                        FlowValuesReport.flow_id == flow_id,
-                        FlowValuesReport.timeframe == timeframe
-                    )
-                ).first()
+                logger.warning(f"No results found for flow_id {flow_id}, skipping save.")
+                return
 
-                if existing_report:
-                    existing_report.raw_data = report_data
-                    existing_report.updated_at = current_time
-                    existing_report.job_id = job_id.id if job_id else None
-                else:
-                    flow_report = FlowValuesReport(
-                        flow_id=flow_id,
-                        timeframe=timeframe,
-                        conversion_metric_id=conversion_metric_id,
-                        job_id=job_id.id if job_id else None,
-                        raw_data=report_data,
-                        created_at=current_time,
-                        updated_at=current_time
-                    )
-                    db.add(flow_report)
-
-                db.commit()
-                logger.info(f"Saved empty flow report for flow_id {flow_id} / timeframe {timeframe}")
+            # Check if any meaningful stats exist in results
+            has_meaningful_data = False
+            for result in results:
+                stats = result.get("statistics", {})
+                # Consider data meaningful if there are recipients, opens, revenue, or clicks
+                if (stats.get("recipients", 0) or stats.get("opens", 0) or 
+                    stats.get("revenue_per_recipient", 0) or stats.get("clicks", 0) or
+                    stats.get("delivered", 0) or stats.get("conversions", 0)):
+                    has_meaningful_data = True
+                    break
+            
+            if not has_meaningful_data:
+                logger.warning(f"No meaningful data found for flow_id {flow_id}, skipping save.")
                 return
 
             # --- Aggregate statistics ---
@@ -369,7 +474,22 @@ class DatabaseService:
                 "bounced": 0,
                 "bounce_rate": 0,
                 "delivered": 0,
-                "delivery_rate": 0
+                "delivery_rate": 0,
+                # Additional new statistics fields
+                "bounced_or_failed_rate": 0,
+                "click_to_open_rate": 0,
+                "clicks_unique": 0,
+                "conversion_rate": 0,
+                "conversion_uniques": 0,
+                "conversion_value": 0,
+                "conversions": 0,
+                "failed": 0,
+                "failed_rate": 0,
+                "opens_unique": 0,
+                "spam_complaint_rate": 0,
+                "spam_complaints": 0,
+                "unsubscribe_uniques": 0,
+                "unsubscribes": 0
             }
 
             total_recipients = 0
@@ -408,6 +528,21 @@ class DatabaseService:
                 bounce_rate = statistics.get("bounce_rate", 0) or 0
                 delivered = statistics.get("delivered", 0) or 0
                 delivery_rate = statistics.get("delivery_rate", 0) or 0
+                # Additional new statistics fields
+                bounced_or_failed_rate = statistics.get("bounced_or_failed_rate", 0) or 0
+                click_to_open_rate = statistics.get("click_to_open_rate", 0) or 0
+                clicks_unique = statistics.get("clicks_unique", 0) or 0
+                conversion_rate = statistics.get("conversion_rate", 0) or 0
+                conversion_uniques = statistics.get("conversion_uniques", 0) or 0
+                conversion_value = statistics.get("conversion_value", 0) or 0
+                conversions = statistics.get("conversions", 0) or 0
+                failed = statistics.get("failed", 0) or 0
+                failed_rate = statistics.get("failed_rate", 0) or 0
+                opens_unique = statistics.get("opens_unique", 0) or 0
+                spam_complaint_rate = statistics.get("spam_complaint_rate", 0) or 0
+                spam_complaints = statistics.get("spam_complaints", 0) or 0
+                unsubscribe_uniques = statistics.get("unsubscribe_uniques", 0) or 0
+                unsubscribes = statistics.get("unsubscribes", 0) or 0
 
                 # Aggregate totals
                 aggregated_stats["bounced_or_failed"] += bounced_or_failed
@@ -416,6 +551,16 @@ class DatabaseService:
                 aggregated_stats["clicks"] += clicks
                 aggregated_stats["bounced"] += bounced
                 aggregated_stats["delivered"] += delivered
+                # Additional new fields aggregation
+                aggregated_stats["clicks_unique"] += clicks_unique
+                aggregated_stats["conversion_uniques"] += conversion_uniques
+                aggregated_stats["conversion_value"] += conversion_value
+                aggregated_stats["conversions"] += conversions
+                aggregated_stats["failed"] += failed
+                aggregated_stats["opens_unique"] += opens_unique
+                aggregated_stats["spam_complaints"] += spam_complaints
+                aggregated_stats["unsubscribe_uniques"] += unsubscribe_uniques
+                aggregated_stats["unsubscribes"] += unsubscribes
 
                 total_recipients += recipients
                 total_opens += opens
@@ -430,6 +575,18 @@ class DatabaseService:
                     weighted_click_rate += click_rate * recipients
                     weighted_bounce_rate += bounce_rate * recipients
                     weighted_delivery_rate += delivery_rate * recipients
+                    # New weighted fields
+                    if "bounced_or_failed_rate_weighted" not in aggregated_stats:
+                        aggregated_stats["bounced_or_failed_rate_weighted"] = 0
+                        aggregated_stats["click_to_open_rate_weighted"] = 0
+                        aggregated_stats["conversion_rate_weighted"] = 0
+                        aggregated_stats["failed_rate_weighted"] = 0
+                        aggregated_stats["spam_complaint_rate_weighted"] = 0
+                    aggregated_stats["bounced_or_failed_rate_weighted"] += bounced_or_failed_rate * recipients
+                    aggregated_stats["click_to_open_rate_weighted"] += click_to_open_rate * recipients
+                    aggregated_stats["conversion_rate_weighted"] += conversion_rate * recipients
+                    aggregated_stats["failed_rate_weighted"] += failed_rate * recipients
+                    aggregated_stats["spam_complaint_rate_weighted"] += spam_complaint_rate * recipients
                     if avg_order_value > 0:
                         total_orders += recipients * (revenue_per_recipient / avg_order_value)
 
@@ -441,6 +598,13 @@ class DatabaseService:
                 aggregated_stats["bounce_rate"] = weighted_bounce_rate / total_recipients
                 aggregated_stats["delivery_rate"] = weighted_delivery_rate / total_recipients
                 aggregated_stats["revenue_per_recipient"] = total_revenue / total_recipients
+                # New weighted averages
+                if "bounced_or_failed_rate_weighted" in aggregated_stats:
+                    aggregated_stats["bounced_or_failed_rate"] = aggregated_stats["bounced_or_failed_rate_weighted"] / total_recipients
+                    aggregated_stats["click_to_open_rate"] = aggregated_stats["click_to_open_rate_weighted"] / total_recipients
+                    aggregated_stats["conversion_rate"] = aggregated_stats["conversion_rate_weighted"] / total_recipients
+                    aggregated_stats["failed_rate"] = aggregated_stats["failed_rate_weighted"] / total_recipients
+                    aggregated_stats["spam_complaint_rate"] = aggregated_stats["spam_complaint_rate_weighted"] / total_recipients
                 if total_orders > 0:
                     aggregated_stats["average_order_value"] = total_revenue / total_orders
 
@@ -471,6 +635,21 @@ class DatabaseService:
                 existing_report.bounce_rate = aggregated_stats["bounce_rate"]
                 existing_report.delivered = int(aggregated_stats["delivered"])
                 existing_report.delivery_rate = aggregated_stats["delivery_rate"]
+                # Additional new statistics fields
+                existing_report.bounced_or_failed_rate = aggregated_stats.get("bounced_or_failed_rate", 0)
+                existing_report.click_to_open_rate = aggregated_stats.get("click_to_open_rate", 0)
+                existing_report.clicks_unique = int(aggregated_stats.get("clicks_unique", 0))
+                existing_report.conversion_rate = aggregated_stats.get("conversion_rate", 0)
+                existing_report.conversion_uniques = int(aggregated_stats.get("conversion_uniques", 0))
+                existing_report.conversion_value = aggregated_stats.get("conversion_value", 0)
+                existing_report.conversions = int(aggregated_stats.get("conversions", 0))
+                existing_report.failed = int(aggregated_stats.get("failed", 0))
+                existing_report.failed_rate = aggregated_stats.get("failed_rate", 0)
+                existing_report.opens_unique = int(aggregated_stats.get("opens_unique", 0))
+                existing_report.spam_complaint_rate = aggregated_stats.get("spam_complaint_rate", 0)
+                existing_report.spam_complaints = int(aggregated_stats.get("spam_complaints", 0))
+                existing_report.unsubscribe_uniques = int(aggregated_stats.get("unsubscribe_uniques", 0))
+                existing_report.unsubscribes = int(aggregated_stats.get("unsubscribes", 0))
                 existing_report.raw_data = report_data
                 existing_report.updated_at = current_time
                 existing_report.job_id = job_id.id if job_id else None
@@ -496,6 +675,21 @@ class DatabaseService:
                     bounce_rate=aggregated_stats["bounce_rate"],
                     delivered=int(aggregated_stats["delivered"]),
                     delivery_rate=aggregated_stats["delivery_rate"],
+                    # Additional new statistics fields
+                    bounced_or_failed_rate=aggregated_stats.get("bounced_or_failed_rate", 0),
+                    click_to_open_rate=aggregated_stats.get("click_to_open_rate", 0),
+                    clicks_unique=int(aggregated_stats.get("clicks_unique", 0)),
+                    conversion_rate=aggregated_stats.get("conversion_rate", 0),
+                    conversion_uniques=int(aggregated_stats.get("conversion_uniques", 0)),
+                    conversion_value=aggregated_stats.get("conversion_value", 0),
+                    conversions=int(aggregated_stats.get("conversions", 0)),
+                    failed=int(aggregated_stats.get("failed", 0)),
+                    failed_rate=aggregated_stats.get("failed_rate", 0),
+                    opens_unique=int(aggregated_stats.get("opens_unique", 0)),
+                    spam_complaint_rate=aggregated_stats.get("spam_complaint_rate", 0),
+                    spam_complaints=int(aggregated_stats.get("spam_complaints", 0)),
+                    unsubscribe_uniques=int(aggregated_stats.get("unsubscribe_uniques", 0)),
+                    unsubscribes=int(aggregated_stats.get("unsubscribes", 0)),
                     raw_data=report_data,
                     created_at=current_time,
                     updated_at=current_time

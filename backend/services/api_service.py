@@ -38,7 +38,23 @@ class APIService:
                         "bounced",
                         "bounce_rate",
                         "delivered",
-                        "delivery_rate"
+                        "delivery_rate",
+                        "bounced_or_failed",
+                        "bounced_or_failed_rate",
+                        "click_to_open_rate",
+                        "clicks_unique",
+                        "conversion_rate",
+                        "conversion_uniques",
+                        "conversion_value",
+                        "conversions",
+                        "failed",
+                        "failed_rate",
+                        "opens_unique",
+                        "spam_complaint_rate",
+                        "spam_complaints",
+                        "unsubscribe_rate",
+                        "unsubscribe_uniques",
+                        "unsubscribes"
                     ],
                     "timeframe": {"key": timeframe},
                     "conversion_metric_id": conversion_metric_id,
@@ -125,7 +141,21 @@ class APIService:
                         "bounced",
                         "bounce_rate",
                         "delivered",
-                        "delivery_rate"
+                        "delivery_rate",
+                        "bounced_or_failed_rate",
+                        "click_to_open_rate",
+                        "clicks_unique",
+                        "conversion_rate",
+                        "conversion_uniques",
+                        "conversion_value",
+                        "conversions",
+                        "failed",
+                        "failed_rate",
+                        "opens_unique",
+                        "spam_complaint_rate",
+                        "spam_complaints",
+                        "unsubscribe_uniques",
+                        "unsubscribes"
                     ],
                     "timeframe": {"key": timeframe},
                     "conversion_metric_id": conversion_metric_id,
@@ -167,12 +197,16 @@ class APIService:
                 try:
                     detail = response.json()["errors"][0]["detail"]
                     wait_time = int(detail.split()[-2])
-                    logger.warning(f"Rate limit hit. Retrying after {wait_time} seconds...")
-                    time.sleep(wait_time)
+                    logger.warning(f"Rate limit hit (would wait {wait_time}s). Using fixed delay instead.")
                 except Exception:
-                    logger.warning("Rate limit parse failed, retrying after 30s")
-                    time.sleep(30)
+                    logger.warning("Rate limit hit. Using fixed delay.")
+                
+                # Don't wait here - let the calling script handle the fixed delay
+                # Just log it and move on to next retry attempt
                 retries += 1
+                if retries < max_retries:
+                    logger.info("Retrying rate limited request after brief delay...")
+                    time.sleep(2)  # Very short delay before retry
                 continue
 
             if response.status_code == 200:

@@ -224,6 +224,23 @@ interface AggregateMetrics {
   previous_aggregate_aov?: number;
 }
 
+interface CombinedAggregateMetrics {
+  total_revenue: number;
+  total_recipients: number;
+  total_placed_orders: number;
+  aggregate_rpr: number;
+  aggregate_aov: number;
+  campaign_aggregate_rpr: number;
+  campaign_aggregate_aov: number;
+  flow_aggregate_rpr: number;
+  flow_aggregate_aov: number;
+  previous_total_revenue?: number;
+  previous_total_recipients?: number;
+  previous_total_placed_orders?: number;
+  previous_aggregate_rpr?: number;
+  previous_aggregate_aov?: number;
+}
+
 interface Flow {
   id: string;
   updated_at: string;
@@ -248,6 +265,12 @@ interface FlowAggregateMetrics {
   previous_total_recipients?: number;
   previous_aggregate_rpr?: number;
   previous_aggregate_aov?: number;
+}
+
+interface JobTimingResponse {
+  last_job_created_at: string | null;
+  timeframe: string;
+  job_type: string;
 }
 
 export const fetchCampaigns = async (timeframe: string = 'last_30_days'): Promise<Campaign[]> => {
@@ -326,6 +349,46 @@ export const fetchFlowAggregateMetrics = async (timeframe: string = 'last_30_day
     return response.data;
   } catch (err: any) {
     console.error("Failed to fetch flow aggregate metrics:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+export const fetchCombinedAggregateMetrics = async (timeframe: string = 'last_30_days'): Promise<CombinedAggregateMetrics | null> => {
+  try {
+    console.log(`Fetching combined aggregate metrics for timeframe: ${timeframe}`);
+    
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/combined-aggregate-metrics`, {
+      params: { timeframe }
+    });
+    
+    console.log('Combined aggregate metrics fetched:', response.data);
+    return response.data;
+  } catch (err: any) {
+    console.error("Failed to fetch combined aggregate metrics:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    return null;
+  }
+};
+
+export const fetchJobTiming = async (timeframe: string, jobType: string = 'campaign_report_values'): Promise<JobTimingResponse | null> => {
+  try {
+    console.log(`Fetching job timing for timeframe: ${timeframe}, jobType: ${jobType}`);
+    
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/jobs/last-execution`, {
+      params: { timeframe, job_type: jobType }
+    });
+    
+    console.log('Job timing fetched:', response.data);
+    return response.data;
+  } catch (err: any) {
+    console.error("Failed to fetch job timing:", {
       message: err.message,
       status: err.response?.status,
       data: err.response?.data,

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { format, toZonedTime } from 'date-fns-tz';
+
 
 interface Campaign {
   id: string;
@@ -35,10 +36,8 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
   // Helper function to get display name for date range
   const getDateRangeDisplayName = (range?: string) => {
     const rangeMap: Record<string, string> = {
-      
       'last_7_days': 'Last 7 days',
       'last_30_days': 'Last 30 days',
-      
     };
     return range ? rangeMap[range] || 'Last 30 days' : 'Last 30 days';
   };
@@ -65,13 +64,23 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
       return 0;
     });
 
+  // ✅ Fix: Convert DB UTC string → Local timezone
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      // Ensure DB timestamp is parsed as UTC
+      const utcDate = new Date(dateString.endsWith("Z") ? dateString : dateString + "Z");
+
+      // Get user's timezone (e.g., Asia/Karachi)
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // Convert UTC → Local
+      const zonedDate = toZonedTime(utcDate, timeZone);
+
+      // Format
+      return format(zonedDate, "MMM d, yyyy h:mm a ", { timeZone });
+    } catch {
+      return "Invalid date";
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -218,61 +227,58 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
             </thead>
             <tbody>
               {isLoading ? (
-                // Show skeleton rows while loading
                 Array.from({ length: 5 }).map((_, index) => (
                   <SkeletonRow key={index} />
                 ))
               ) : filteredAndSortedCampaigns.length === 0 ? (
-                // Show empty state when no campaigns
                 <tr>
                   <td colSpan={9} className="p-8 text-center text-muted-foreground">
                     No campaigns found
                   </td>
                 </tr>
               ) : (
-                // Show actual campaign data
                 filteredAndSortedCampaigns.map((campaign) => (
                   <tr 
                     key={campaign.id} 
                     className="border-b border-border hover:bg-muted/50 transition-colors"
                   >
-                  <td className="p-3 text-sm text-foreground font-medium tabular-nums">
-                    {formatDate(campaign.updated_at)}
-                  </td>
-                  <td className="p-3 text-sm text-foreground font-medium">
-                    {campaign.name}
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                    {campaign.recipients >= 1000 
-                      ? `${(campaign.recipients / 1000).toFixed(0)}k`
-                      : campaign.recipients.toLocaleString()
-                    }
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                    {formatPercentage(campaign.open_rate)}
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                    {formatPercentage(campaign.click_rate)}
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                    {campaign.placed_orders >= 1000 
-                      ? `${(campaign.placed_orders / 1000).toFixed(1)}k`
-                      : campaign.placed_orders.toLocaleString()
-                    }
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground font-medium tabular-nums">
-                    ${campaign.revenue >= 1000000 
-                      ? `${(campaign.revenue / 1000000).toFixed(1)}M`
-                      : campaign.revenue >= 1000
-                      ? `${(campaign.revenue / 1000).toFixed(0)}k`
-                      : campaign.revenue.toFixed(0)
-                    }
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                    ${campaign.rpr.toFixed(2)}
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                    ${campaign.aov.toFixed(0)}
+                    <td className="p-3 text-sm text-foreground font-medium tabular-nums">
+                      {formatDate(campaign.updated_at)}
+                    </td>
+                    <td className="p-3 text-sm text-foreground font-medium">
+                      {campaign.name}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      {campaign.recipients >= 1000 
+                        ? `${(campaign.recipients / 1000).toFixed(0)}k`
+                        : campaign.recipients.toLocaleString()
+                      }
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      {formatPercentage(campaign.open_rate)}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      {formatPercentage(campaign.click_rate)}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      {campaign.placed_orders >= 1000 
+                        ? `${(campaign.placed_orders / 1000).toFixed(1)}k`
+                        : campaign.placed_orders.toLocaleString()
+                      }
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground font-medium tabular-nums">
+                      ${campaign.revenue >= 1000000 
+                        ? `${(campaign.revenue / 1000000).toFixed(1)}M`
+                        : campaign.revenue >= 1000
+                        ? `${(campaign.revenue / 1000).toFixed(0)}k`
+                        : campaign.revenue.toFixed(0)
+                      }
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      ${campaign.rpr.toFixed(2)}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      ${campaign.aov.toFixed(0)}
                     </td>
                   </tr>
                 ))

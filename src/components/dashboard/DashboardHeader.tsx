@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { format, toZonedTime } from 'date-fns-tz';
 
 const dateRangeOptions = [
   { label: 'Last 7 days', value: 'last_7_days' },
@@ -16,20 +17,20 @@ const dateRangeOptions = [
 interface DashboardHeaderProps {
   onDateRangeChange: (range: string) => void;
   onCompareToggle: (enabled: boolean) => void;
+  lastJobTime?: string | null;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onDateRangeChange,
-  onCompareToggle
+  onCompareToggle,
+  lastJobTime
 }) => {
   const [selectedRange, setSelectedRange] = useState('last_7_days');
   const [compareEnabled, setCompareEnabled] = useState(true);
 
-  
   useEffect(() => {
-  onDateRangeChange('last_7_days');
-}, []);
-
+    onDateRangeChange('last_7_days');
+  }, []);
 
   const handleRangeChange = (range: string) => {
     setSelectedRange(range);
@@ -45,6 +46,28 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const selectedRangeLabel = dateRangeOptions.find(
     option => option.value === selectedRange
   )?.label || 'Last 7 days';
+
+  const formatJobTime = (jobTime: string | null) => {
+    if (!jobTime) {
+      return 'No recent job runs';
+    }
+
+    try {
+      // Ensure DB string is treated as UTC
+      const utcDate = new Date(jobTime.endsWith('Z') ? jobTime : jobTime + 'Z');
+
+      // Detect user local timezone
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const zonedDate = toZonedTime(utcDate, timeZone);
+
+      // Format with timezone abbreviation
+      const formatted = format(zonedDate, "MMM d, yyyy h:mm a ", { timeZone });
+
+      return `Last updated: ${formatted}`;
+    } catch {
+      return 'Invalid job time';
+    }
+  };
 
   return (
     <div className="dashboard-card border-b dashboard-border sticky top-0 z-10 overflow-x-hidden backdrop-blur-lg bg-background/90">
@@ -103,7 +126,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </div>
         
         <p className="mt-2 text-xs sm:text-sm dashboard-text-muted">
-          Account timezone: UTC-8 (Pacific Standard Time)
+          {formatJobTime(lastJobTime)}
         </p>
       </div>
     </div>

@@ -14,7 +14,7 @@ import {
   mockCampaigns,
   generateSparklineData,
 } from '@/data/mockData';
-import { fetchCampaigns, fetchAggregateMetrics, fetchFlowAggregateMetrics } from '@/lib/apiHelper';
+import { fetchCampaigns, fetchAggregateMetrics, fetchFlowAggregateMetrics, fetchCombinedAggregateMetrics, fetchJobTiming } from '@/lib/apiHelper';
 import { Campaign } from '@/types/campaign';
 
 const Index = () => {
@@ -26,7 +26,7 @@ const Index = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
   const [previousRevenue, setPreviousRevenue] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0); // Add this state
+  const [totalRevenue, setTotalRevenue] = useState(0); 
   const [aggregateRPR, setAggregateRPR] = useState(0);
   const [aggregateAOV, setAggregateAOV] = useState(0);
   const [previousAggregateRPR, setPreviousAggregateRPR] = useState(0);
@@ -35,7 +35,8 @@ const Index = () => {
   const [previousCampaignRevenue, setPreviousCampaignRevenue] = useState(0);
   const [flowRevenue, setFlowRevenue] = useState(0);
   const [previousFlowRevenue, setPreviousFlowRevenue] = useState(0);
-  
+  const [lastJobTime, setLastJobTime] = useState<string | null>(null);
+
   // 🔹 Map current timeframe to its "previous" version
   const getPreviousRange = (range: string) => {
     if (range === 'last_7_days') return 'previous_7_days';
@@ -43,14 +44,14 @@ const Index = () => {
     return 'previous_30_days';
   };
 
-  // 🔹 Load aggregate metrics (RPR and AOV)
+  // 🔹 Load combined aggregate metrics (RPR and AOV from both campaigns and flows)
   const loadAggregateMetrics = async (dateRange: string = selectedDateRange) => {
     try {
-      const metrics = await fetchAggregateMetrics(dateRange);
+      const metrics = await fetchCombinedAggregateMetrics(dateRange);
       if (metrics) {
         setAggregateRPR(metrics.aggregate_rpr);
         setAggregateAOV(metrics.aggregate_aov);
-        
+
         if (compareEnabled && metrics.previous_aggregate_rpr !== undefined && metrics.previous_aggregate_aov !== undefined) {
           setPreviousAggregateRPR(metrics.previous_aggregate_rpr);
           setPreviousAggregateAOV(metrics.previous_aggregate_aov);
@@ -58,9 +59,18 @@ const Index = () => {
           setPreviousAggregateRPR(0);
           setPreviousAggregateAOV(0);
         }
+
+        console.log('Combined metrics breakdown:', {
+          total_rpr: metrics.aggregate_rpr,
+          campaign_rpr: metrics.campaign_aggregate_rpr,
+          flow_rpr: metrics.flow_aggregate_rpr,
+          total_aov: metrics.aggregate_aov,
+          campaign_aov: metrics.campaign_aggregate_aov,
+          flow_aov: metrics.flow_aggregate_aov
+        });
       }
     } catch (error: any) {
-      console.error('Failed to fetch aggregate metrics:', error);
+      console.error('Failed to fetch combined aggregate metrics:', error);
       // Fallback to mock data if API fails
       setAggregateRPR(mockToplineKPIs.cards.rpr);
       setAggregateAOV(mockToplineKPIs.cards.aov);
@@ -73,7 +83,7 @@ const Index = () => {
       const flowMetrics = await fetchFlowAggregateMetrics(dateRange);
       if (flowMetrics) {
         setFlowRevenue(flowMetrics.total_revenue);
-        
+
         if (compareEnabled && flowMetrics.previous_total_revenue !== undefined) {
           setPreviousFlowRevenue(flowMetrics.previous_total_revenue);
         } else {
@@ -88,44 +98,59 @@ const Index = () => {
     }
   };
 
-  // 🔹 Load campaigns and handle compare logic
-const loadCampaigns = async (dateRange: string = selectedDateRange) => {
-  try {
-    setIsLoadingCampaigns(true);
-    // fetch current
-    const currentData = await fetchCampaigns(dateRange);
-    setCampaigns(currentData);
-    
-    // Total revenue calculation is handled in useEffect
-    
-    // Calculate campaign revenue (total revenue for campaigns with type='campaign')
-    const campaignTypeData = currentData.filter(c => c.type === 'campaign');
-    const currentCampaignRevenue = campaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
-    setCampaignRevenue(currentCampaignRevenue);
-    
-    // fetch previous only if compare is enabled
-    if (compareEnabled) {
-      const prevRange = getPreviousRange(dateRange);
-      const prevData = await fetchCampaigns(prevRange);
-      // Previous revenue calculation is handled in useEffect
-      
-      // Calculate previous campaign revenue (total revenue for campaigns with type='campaign')
-      const prevCampaignTypeData = prevData.filter(c => c.type === 'campaign');
-      const prevCampaignRevenue = prevCampaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
-      setPreviousCampaignRevenue(prevCampaignRevenue);
-    } else {
-      setPreviousCampaignRevenue(0);
+  // 🔹 Load job timing
+  const loadJobTiming = async (dateRange: string = selectedDateRange) => {
+    try {
+      const jobTiming = await fetchJobTiming(dateRange, 'campaign_report_values');
+      if (jobTiming && jobTiming.last_job_created_at) {
+        setLastJobTime(jobTiming.last_job_created_at);
+      } else {
+        setLastJobTime(null);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch job timing:', error);
+      setLastJobTime(null);
     }
-  } catch (error: any) {
-    console.error('Failed to fetch campaigns in index.tsx:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-    });
-  } finally {
-    setIsLoadingCampaigns(false);
-  }
-};
+  };
+
+  // 🔹 Load campaigns and handle compare logic
+  const loadCampaigns = async (dateRange: string = selectedDateRange) => {
+    try {
+      setIsLoadingCampaigns(true);
+      // fetch current
+      const currentData = await fetchCampaigns(dateRange);
+      setCampaigns(currentData);
+
+      // Total revenue calculation is handled in useEffect
+
+      // Calculate campaign revenue (total revenue for campaigns with type='campaign')
+      const campaignTypeData = currentData.filter(c => c.type === 'campaign');
+      const currentCampaignRevenue = campaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
+      setCampaignRevenue(currentCampaignRevenue);
+
+      // fetch previous only if compare is enabled
+      if (compareEnabled) {
+        const prevRange = getPreviousRange(dateRange);
+        const prevData = await fetchCampaigns(prevRange);
+        // Previous revenue calculation is handled in useEffect
+
+        // Calculate previous campaign revenue (total revenue for campaigns with type='campaign')
+        const prevCampaignTypeData = prevData.filter(c => c.type === 'campaign');
+        const prevCampaignRevenue = prevCampaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
+        setPreviousCampaignRevenue(prevCampaignRevenue);
+      } else {
+        setPreviousCampaignRevenue(0);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch campaigns in index.tsx:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    } finally {
+      setIsLoadingCampaigns(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -134,6 +159,7 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     loadCampaigns();
     loadAggregateMetrics();
     loadFlowAggregateMetrics();
+    loadJobTiming();
   }, []);
 
   // Update total revenue when campaign or flow revenue changes
@@ -158,6 +184,7 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     loadCampaigns(range);
     loadAggregateMetrics(range);
     loadFlowAggregateMetrics(range);
+    loadJobTiming(range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
@@ -197,12 +224,12 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     previousEmailRevenue = campaigns
       .filter(c => c.channel === 'email')
       .reduce((sum, c) => sum + (c.previous_revenue || 0), 0);
-    
+
     // Calculate previous Email Rev Share as a decimal
     previousEmailRevShare = previousRevenue > 0
       ? previousEmailRevenue / previousRevenue
       : 0;
-    
+
     // Calculate the delta as percentage points (not percentage change)
     emailRevDelta = emailRevShare - previousEmailRevShare;
   }
@@ -216,6 +243,7 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
       <DashboardHeader
         onDateRangeChange={handleDateRangeChange}
         onCompareToggle={handleCompareToggle}
+        lastJobTime={lastJobTime}
       />
       <div className="p-4 sm:p-6 space-y-8 max-w-full overflow-x-hidden">
         {/* Core Revenue Metrics */}
@@ -232,18 +260,18 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
               delta={
                 compareEnabled && previousRevenue > 0
                   ? {
-                      value:
-                        ((totalRevenue - previousRevenue) / previousRevenue) *
-                        100,
-                      isPositive: totalRevenue >= previousRevenue,
-                    }
+                    value:
+                      ((totalRevenue - previousRevenue) / previousRevenue) *
+                      100,
+                    isPositive: totalRevenue >= previousRevenue,
+                  }
                   : undefined
               }
               sparkline={generateSparklineData()}
               isHighPerformance={totalRevenue > previousRevenue}
               onCardClick={handleMetricClick}
             />
-          {/* Email Rev Share Card */}
+            {/* Email Rev Share Card */}
             <KPICard
               title="Email Rev Share"
               value={emailRevShare}
@@ -255,10 +283,6 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}
             />
-    
-    
-           
-
             <KPICard
               title="Campaign Rev"
               value={campaignRevenue}
@@ -299,7 +323,8 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
             />
             <KPICard
               title="RPR"
-              value={aggregateRPR.toFixed(2)}
+              value={aggregateRPR}
+              format="percentage"
               delta={compareEnabled && previousAggregateRPR > 0 ? {
                 value: ((aggregateRPR - previousAggregateRPR) / previousAggregateRPR),
                 isPositive: aggregateRPR >= previousAggregateRPR
@@ -621,7 +646,7 @@ const loadCampaigns = async (dateRange: string = selectedDateRange) => {
 
         {/* Campaigns Table */}
         <section>
-         <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
+          <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
         </section>
       </div>
     </div>

@@ -1,8 +1,10 @@
-# backend/flows_value_report_script.py
+# backend/flows_value_report_script_fixed.py
 
 import logging
 import time
 import argparse
+import signal
+import sys
 from dotenv import load_dotenv
 from core.database import SessionLocal, Base, engine
 from models.flow_models import Flow, FlowValuesReport
@@ -14,19 +16,46 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def run_flow_values_report(timeframe: str = "last_30_days"):
+# Global flag for graceful shutdown
+should_continue = True
+
+def signal_handler(signum, frame):
+    global should_continue
+    logger.info("Received interrupt signal. Finishing current flow and stopping...")
+    should_continue = False
+
+def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = None):
     """Main process to fetch and save flow values report"""
+    global should_continue
+    
+    # Register signal handler for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
     env_vars = get_environment_variables()
     
     # ensure tables exist
     Base.metadata.create_all(bind=engine)
     
-    # get flows from DB (limit same as campaigns)
-    flow_ids = DatabaseService.get_top_flow_ids()
+    # get flows from DB
+    all_flow_ids = DatabaseService.get_top_flow_ids()
+    
+    # Prioritize flows that are more likely to have data
+    # Put SfcWVx first since we know it has data
+    priority_flows = ['SfcWVx']  # Known active flow
+    other_flows = [fid for fid in all_flow_ids if fid not in priority_flows]
+    flow_ids = priority_flows + other_flows
+    
+    # Limit flows if specified
+    if max_flows:
+        flow_ids = flow_ids[:max_flows]
+        logger.info(f"Limited to first {max_flows} flows for testing")
     
     if not flow_ids:
         logger.warning("No flow IDs found in the database. Exiting.")
         return
+
+    logger.info(f"Will process {len(flow_ids)} flows for timeframe: {timeframe}")
     
     # create a job record
     job_id = DatabaseService.create_new_job(
@@ -37,11 +66,20 @@ def run_flow_values_report(timeframe: str = "last_30_days"):
         return
 
     request_delay = 30
-    logger.info("Waiting 30 seconds before starting requests...")
+    logger.info(f"Waiting {request_delay} seconds before starting requests...")
     time.sleep(request_delay)
+    
+    processed_count = 0
+    saved_count = 0
+    skipped_count = 0
+    error_count = 0
     
     try:
         for i, flow_id in enumerate(flow_ids):
+            if not should_continue:
+                logger.info("Stopping processing due to interrupt signal")
+                break
+                
             try:
                 logger.info(f"Processing flow ID: {flow_id} ({i+1}/{len(flow_ids)})")
                 
@@ -52,28 +90,67 @@ def run_flow_values_report(timeframe: str = "last_30_days"):
                     conversion_metric_id=env_vars["conversion_metric_id"]
                 )
 
-                # save to DB (keeps existing data for other timeframes intact)
-                DatabaseService.save_flow_report_values(
-                    report, flow_id, timeframe,
-                    conversion_metric_id=env_vars["conversion_metric_id"],
-                    job_id=job_id
-                )
+                # Check if report has data before saving
+                if report:
+                    results = report.get("data", {}).get("attributes", {}).get("results", [])
+                    
+                    # Check for meaningful data
+                    has_meaningful_data = False
+                    if results:
+                        for result in results:
+                            stats = result.get("statistics", {})
+                            if (stats.get("recipients", 0) or stats.get("opens", 0) or 
+                                stats.get("clicks", 0) or stats.get("delivered", 0) or
+                                stats.get("revenue_per_recipient", 0) or stats.get("conversions", 0)):
+                                has_meaningful_data = True
+                                break
+                    
+                    if has_meaningful_data:
+                        logger.info(f"Flow {flow_id} has meaningful data, saving...")
+                        # save to DB
+                        DatabaseService.save_flow_report_values(
+                            report, flow_id, timeframe,
+                            conversion_metric_id=env_vars["conversion_metric_id"],
+                            job_id=job_id
+                        )
+                        saved_count += 1
+                        logger.info(f"✓ Successfully saved flow ID: {flow_id}")
+                    else:
+                        logger.info(f"Flow {flow_id} has no meaningful data, skipping")
+                        skipped_count += 1
+                else:
+                    logger.warning(f"No report data for flow {flow_id}")
+                    skipped_count += 1
 
-                logger.info(f"Successfully processed flow ID: {flow_id}")
+                processed_count += 1
                 
-                if i < len(flow_ids) - 1:
+                # Add delay between requests
+                if i < len(flow_ids) - 1 and should_continue:
                     logger.info(f"Waiting {request_delay} seconds before next request...")
                     time.sleep(request_delay)
                     
             except Exception as e:
+                error_count += 1
                 if "Daily rate limit exceeded" in str(e):
                     logger.error("Daily rate limit exceeded. Stopping processing for today.")
                     break
                 logger.error(f"Failed to process flow ID {flow_id}: {e}")
-                if i < len(flow_ids) - 1:
+                if i < len(flow_ids) - 1 and should_continue:
                     logger.info(f"Waiting {request_delay} seconds before next request after error...")
                     time.sleep(request_delay)
+                    
+    except KeyboardInterrupt:
+        logger.info("Received KeyboardInterrupt. Stopping gracefully...")
+    except Exception as e:
+        logger.error(f"Unexpected error in main loop: {e}")
     finally:
+        # Print summary
+        logger.info(f"\n=== Processing Summary ===")
+        logger.info(f"Flows processed: {processed_count}/{len(flow_ids)}")
+        logger.info(f"Flows saved: {saved_count}")
+        logger.info(f"Flows skipped: {skipped_count}")
+        logger.info(f"Errors: {error_count}")
+        
         # Mark job as completed
         if job_id:
             logger.info(f"Marking job {job_id.id} as completed")
@@ -86,10 +163,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--timeframe", 
         type=str, 
-        default="last_30_days",
+        default="last_7_days",
         help="Timeframe for the flow values report (e.g. last_7_days, last_30_days)"
+    )
+    parser.add_argument(
+        "--max-flows", 
+        type=int, 
+        default=None,
+        help="Maximum number of flows to process (for testing)"
     )
     
     args = parser.parse_args()
     logger.info(f"Starting flow values report script with timeframe: {args.timeframe}")
-    run_flow_values_report(args.timeframe)
+    if args.max_flows:
+        logger.info(f"Limited to {args.max_flows} flows for testing")
+    
+    run_flow_values_report(args.timeframe, args.max_flows)

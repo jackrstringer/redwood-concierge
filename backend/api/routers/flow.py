@@ -34,6 +34,21 @@ class FlowResponse(BaseModel):
     bounce_rate: Optional[float] = 0.0
     delivered: Optional[int] = 0
     delivery_rate: Optional[float] = 0.0
+    # Additional new statistics fields
+    bounced_or_failed_rate: Optional[float] = 0.0
+    click_to_open_rate: Optional[float] = 0.0
+    clicks_unique: Optional[int] = 0
+    conversion_rate: Optional[float] = 0.0
+    conversion_uniques: Optional[int] = 0
+    conversion_value: Optional[float] = 0.0
+    conversions: Optional[int] = 0
+    failed: Optional[int] = 0
+    failed_rate: Optional[float] = 0.0
+    opens_unique: Optional[int] = 0
+    spam_complaint_rate: Optional[float] = 0.0
+    spam_complaints: Optional[int] = 0
+    unsubscribe_uniques: Optional[int] = 0
+    unsubscribes: Optional[int] = 0
 
 class FlowAggregateMetricsResponse(BaseModel):
     total_revenue: Optional[float] = 0.0
