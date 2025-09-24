@@ -17,6 +17,7 @@ interface Campaign {
   revenue: number;
   rpr: number;
   aov: number;
+  status?: string;
 }
 
 interface CampaignsTableProps {
@@ -104,6 +105,7 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
     <tr className="border-b border-border">
       <td className="p-3"><Skeleton className="h-4 w-16" /></td>
       <td className="p-3"><Skeleton className="h-4 w-32" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-16" /></td>
       <td className="p-3"><Skeleton className="h-4 w-12" /></td>
       <td className="p-3"><Skeleton className="h-4 w-10" /></td>
       <td className="p-3"><Skeleton className="h-4 w-10" /></td>
@@ -158,6 +160,15 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
                   >
                     Name
                     <SortIcon field="name" />
+                  </button>
+                </th>
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[100px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    onClick={() => handleSort('status')}
+                  >
+                    Status
+                    <SortIcon field="status" />
                   </button>
                 </th>
                 <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[100px]">
@@ -232,7 +243,7 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
                 ))
               ) : filteredAndSortedCampaigns.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={10} className="p-8 text-center text-muted-foreground">
                     No campaigns found
                   </td>
                 </tr>
@@ -247,6 +258,16 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
                     </td>
                     <td className="p-3 text-sm text-foreground font-medium">
                       {campaign.name}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        campaign.status === 'sent' ? 'bg-green-100 text-green-800' :
+                        campaign.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                        campaign.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {campaign.status || 'Unknown'}
+                      </span>
                     </td>
                     <td className="p-3 text-sm text-muted-foreground tabular-nums">
                       {campaign.recipients >= 1000 

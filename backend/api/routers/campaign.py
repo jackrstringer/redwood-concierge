@@ -29,6 +29,7 @@ class CampaignResponse(BaseModel):
     placed_orders: Optional[int] = 0
     channel: Optional[str] = None
     type: Optional[str] = None
+    status: Optional[str] = None
     previous_revenue: Optional[float] = None
     bounce_rate: Optional[float] = 0.0
     delivered: Optional[int] = 0
@@ -54,17 +55,6 @@ class CampaignResponse(BaseModel):
     unsubscribe_uniques: Optional[int] = 0
     unsubscribes: Optional[int] = 0
 
-class AggregateMetricsResponse(BaseModel):
-    total_revenue: Optional[float] = 0.0
-    total_recipients: Optional[int] = 0
-    total_placed_orders: Optional[int] = 0
-    aggregate_rpr: Optional[float] = 0.0  
-    aggregate_aov: Optional[float] = 0.0  
-    previous_total_revenue: Optional[float] = None
-    previous_total_recipients: Optional[int] = None
-    previous_total_placed_orders: Optional[int] = None
-    previous_aggregate_rpr: Optional[float] = None
-    previous_aggregate_aov: Optional[float] = None
 
 @router.get("/campaigns", response_model=List[CampaignResponse])
 async def get_campaigns(
@@ -81,73 +71,54 @@ async def get_campaigns(
         elif timeframe == 'last_30_days':
             prev_timeframe = 'previous_30_days'
         
-        # Using raw SQL to get both current and previous data
+        # Using view query for current data
+        query = text("""
+            SELECT 
+                id,
+                updated_at,
+                name,
+                channel,
+                type,
+                status,
+                recipients,
+                open_rate,
+                click_rate,
+                (delivered * revenue_per_recipient) AS revenue,
+                revenue_per_recipient,
+                average_order_value,
+                placed_orders,
+                bounce_rate,
+                delivered,
+                delivery_rate,
+                bounced,
+                opens,
+                clicks
+            FROM 
+                vw_report_data
+            WHERE 
+                type = 'campaign'
+                AND timeframe = :timeframe
+        """)
+        
+        # Execute the query for current data
+        results = db.execute(query, {"timeframe": timeframe}).fetchall()
+        
+        # Get previous data for comparison if needed
+        previous_data = {}
         if prev_timeframe:
-            query = text("""
+            prev_query = text("""
                 SELECT 
-                    c.id,
-                    c.updated_at,
-                    c.name,
-                    c.channel,
-                    c.type,
-                    crv.recipients,
-                    crv.open_rate,
-                    crv.click_rate,
-                    (crv.delivered * crv.revenue_per_recipient) AS revenue,
-                    crv.revenue_per_recipient,
-                    crv.average_order_value,
-                    crv.placed_orders,
-                    crv.bounce_rate,
-                    crv.delivered,
-                    crv.delivery_rate,
-                    crv.bounced,
-                    crv.opens,
-                    crv.clicks,
-                    prev_crv.recipients * prev_crv.revenue_per_recipient AS previous_revenue
+                    id,
+                    (delivered * revenue_per_recipient) AS revenue
                 FROM 
-                    campaigns c
-                JOIN 
-                    campaign_report_values crv ON c.id = crv.campaign_id
-                LEFT JOIN 
-                    campaign_report_values prev_crv ON c.id = prev_crv.campaign_id 
-                    AND prev_crv.timeframe = :prev_timeframe
+                    vw_report_data
                 WHERE 
-                    crv.timeframe = :timeframe
+                    type = 'campaign'
+                    AND timeframe = :prev_timeframe
             """)
             
-            # Execute the query with parameters
-            results = db.execute(query, {"timeframe": timeframe, "prev_timeframe": prev_timeframe}).fetchall()
-        else:
-            query = text("""
-                SELECT 
-                    c.id,
-                    c.updated_at,
-                    c.name,
-                    c.channel,
-                    c.type,
-                    crv.recipients,
-                    crv.open_rate,
-                    crv.click_rate,
-                    (crv.delivered * crv.revenue_per_recipient) AS revenue,
-                    crv.revenue_per_recipient,
-                    crv.average_order_value,
-                    crv.placed_orders,
-                    crv.bounce_rate,
-                    crv.delivered,
-                    crv.delivery_rate,
-                    crv.bounced,
-                    crv.opens,
-                    crv.clicks
-                FROM 
-                    campaigns c
-                JOIN 
-                    campaign_report_values crv ON c.id = crv.campaign_id
-                WHERE 
-                    crv.timeframe = :timeframe
-            """)
-            
-            # Execute the query with parameters
-            results = db.execute(query, {"timeframe": timeframe}).fetchall()
+            prev_results = db.execute(prev_query, {"prev_timeframe": prev_timeframe}).fetchall()
+            previous_data = {row.id: row.revenue for row in prev_results}
         
         campaigns = []
         for row in results:
@@ -164,6 +135,7 @@ async def get_campaigns(
                 "placed_orders": float(row.placed_orders) if row.placed_orders is not None else 0.0,
                 "channel": row.channel if row.channel is not None else None,
                 "type": row.type if row.type is not None else None,
+                "status": row.status if row.status is not None else None,
                 "bounce_rate": float(row.bounce_rate) if row.bounce_rate is not None else 0.0,
                 "delivered": int(row.delivered) if row.delivered is not None else 0,
                 "delivery_rate": float(row.delivery_rate) if row.delivery_rate is not None else 0.0,
@@ -173,8 +145,8 @@ async def get_campaigns(
             }
             
             # Add previous revenue if available
-            if prev_timeframe and hasattr(row, 'previous_revenue'):
-                campaign_data["previous_revenue"] = float(row.previous_revenue) if row.previous_revenue is not None else 0.0
+            if prev_timeframe and row.id in previous_data:
+                campaign_data["previous_revenue"] = float(previous_data[row.id]) if previous_data[row.id] is not None else 0.0
                 
             campaigns.append(CampaignResponse(**campaign_data))
         
@@ -188,189 +160,6 @@ async def get_campaigns(
             detail=f"An error occurred while fetching campaigns: {str(e)}"
         )
 
-@router.get("/campaigns/aggregate-metrics", response_model=AggregateMetricsResponse)
-async def get_aggregate_metrics(
-    timeframe: str = Query("timeframe"),
-    db: Session = Depends(get_db)
-):
-    try:
-        logger.info(f"Fetching aggregate metrics for timeframe: {timeframe}")
-        
-        # Determine previous timeframe
-        prev_timeframe = None
-        if timeframe == 'last_7_days':
-            prev_timeframe = 'previous_7_days'
-        elif timeframe == 'last_30_days':
-            prev_timeframe = 'previous_30_days'
-        
-        # Get current period aggregates with simple averages
-        current_query = text("""
-            SELECT 
-                SUM(crv.delivered * crv.revenue_per_recipient) AS total_revenue,
-                SUM(crv.recipients) AS total_recipients,
-                SUM(crv.placed_orders) AS total_placed_orders,
-                -- Simple average RPR for the timeframe
-                AVG(crv.revenue_per_recipient) AS avg_revenue_per_recipient,
-                -- Simple average AOV for the timeframe
-                AVG(crv.average_order_value) AS avg_order_value
-            FROM 
-                campaigns c
-            JOIN 
-                campaign_report_values crv ON c.id = crv.campaign_id
-            WHERE 
-                crv.timeframe = :timeframe
-        """)
-        
-        current_result = db.execute(current_query, {"timeframe": timeframe}).fetchone()
-        
-        # Calculate current period metrics
-        total_revenue = float(current_result.total_revenue) if current_result.total_revenue is not None else 0.0
-        total_recipients = int(current_result.total_recipients) if current_result.total_recipients is not None else 0
-        total_placed_orders = int(current_result.total_placed_orders) if current_result.total_placed_orders is not None else 0
-        
-        # Use the weighted averages calculated in the database query
-        aggregate_rpr = float(current_result.avg_revenue_per_recipient) if current_result.avg_revenue_per_recipient is not None else 0.0
-        aggregate_aov = float(current_result.avg_order_value) if current_result.avg_order_value is not None else 0.0
-        
-        response_data = {
-            "total_revenue": total_revenue,
-            "total_recipients": total_recipients,
-            "total_placed_orders": total_placed_orders,
-            "aggregate_rpr": aggregate_rpr,
-            "aggregate_aov": aggregate_aov
-        }
-        
-        # Get previous period if comparison is needed
-        if prev_timeframe:
-            prev_query = text("""
-                SELECT 
-                    SUM(crv.delivered * crv.revenue_per_recipient) AS total_revenue,
-                    SUM(crv.recipients) AS total_recipients,
-                    SUM(crv.placed_orders) AS total_placed_orders,
-                    -- Simple average RPR for the timeframe
-                    AVG(crv.revenue_per_recipient) AS avg_revenue_per_recipient,
-                    -- Simple average AOV for the timeframe
-                    AVG(crv.average_order_value) AS avg_order_value
-                FROM 
-                    campaigns c
-                JOIN 
-                    campaign_report_values crv ON c.id = crv.campaign_id
-                WHERE 
-                    crv.timeframe = :prev_timeframe
-            """)
-            
-            prev_result = db.execute(prev_query, {"prev_timeframe": prev_timeframe}).fetchone()
-            
-            if prev_result:
-                prev_total_revenue = float(prev_result.total_revenue) if prev_result.total_revenue is not None else 0.0
-                prev_total_recipients = int(prev_result.total_recipients) if prev_result.total_recipients is not None else 0
-                prev_total_placed_orders = int(prev_result.total_placed_orders) if prev_result.total_placed_orders is not None else 0
-                
-                # Use the weighted averages calculated in the database query
-                prev_aggregate_rpr = float(prev_result.avg_revenue_per_recipient) if prev_result.avg_revenue_per_recipient is not None else 0.0
-                prev_aggregate_aov = float(prev_result.avg_order_value) if prev_result.avg_order_value is not None else 0.0
-                
-                response_data.update({
-                    "previous_total_revenue": prev_total_revenue,
-                    "previous_total_recipients": prev_total_recipients,
-                    "previous_total_placed_orders": prev_total_placed_orders,
-                    "previous_aggregate_rpr": prev_aggregate_rpr,
-                    "previous_aggregate_aov": prev_aggregate_aov
-                })
-        
-        logger.info(f"Successfully calculated aggregate metrics: RPR={aggregate_rpr:.4f}, AOV={aggregate_aov:.2f}")
-        return AggregateMetricsResponse(**response_data)
-        
-    except Exception as e:
-        logger.error(f"Error fetching aggregate metrics: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"An error occurred while fetching aggregate metrics: {str(e)}"
-        )
-
-class CombinedAggregateMetricsResponse(BaseModel):
-    total_revenue: Optional[float] = 0.0
-    total_recipients: Optional[int] = 0
-    total_placed_orders: Optional[int] = 0
-    aggregate_rpr: Optional[float] = 0.0  
-    aggregate_aov: Optional[float] = 0.0  
-    campaign_aggregate_rpr: Optional[float] = 0.0
-    campaign_aggregate_aov: Optional[float] = 0.0
-    flow_aggregate_rpr: Optional[float] = 0.0
-    flow_aggregate_aov: Optional[float] = 0.0
-    previous_total_revenue: Optional[float] = None
-    previous_total_recipients: Optional[int] = None
-    previous_total_placed_orders: Optional[int] = None
-    previous_aggregate_rpr: Optional[float] = None
-    previous_aggregate_aov: Optional[float] = None
 
 
-@router.get("/combined-aggregate-metrics", response_model=CombinedAggregateMetricsResponse)
-async def get_combined_aggregate_metrics(
-    timeframe: str = Query("timeframe"),
-    db: Session = Depends(get_db)
-):
-    """Get combined aggregate metrics from both campaigns and flows"""
-    try:
-        logger.info(f"Fetching combined aggregate metrics for timeframe: {timeframe}")
-        
-        # Determine previous timeframe
-        prev_timeframe = None
-        if timeframe == 'last_7_days':
-            prev_timeframe = 'previous_7_days'
-        elif timeframe == 'last_30_days':
-            prev_timeframe = 'previous_30_days'
-        
-        # ✅ Combined query for simple average RPR & AOV
-        combined_query = text("""
-            SELECT 
-                AVG(rpr)  AS avg_rpr,
-                AVG(aov)  AS avg_aov
-            FROM (
-                SELECT 
-                    crv.revenue_per_recipient AS rpr,
-                    crv.average_order_value AS aov
-                FROM campaign_report_values crv
-                WHERE crv.timeframe = :timeframe
 
-                UNION ALL
-
-                SELECT 
-                    frv.revenue_per_recipient AS rpr,
-                    frv.average_order_value AS aov
-                FROM flow_report_values frv
-                WHERE frv.timeframe = :timeframe
-            ) AS data
-        """)
-        
-        combined_result = db.execute(combined_query, {"timeframe": timeframe}).fetchone()
-        
-        # Extract combined values
-        combined_rpr = float(combined_result.avg_rpr) if combined_result and combined_result.avg_rpr is not None else 0.0
-        combined_aov = float(combined_result.avg_aov) if combined_result and combined_result.avg_aov is not None else 0.0
-
-        response_data = {
-            "aggregate_rpr": combined_rpr,
-            "aggregate_aov": combined_aov,
-        }
-        
-        # ✅ Get previous timeframe if available
-        if prev_timeframe:
-            prev_result = db.execute(combined_query, {"timeframe": prev_timeframe}).fetchone()
-            prev_rpr = float(prev_result.avg_rpr) if prev_result and prev_result.avg_rpr is not None else 0.0
-            prev_aov = float(prev_result.avg_aov) if prev_result and prev_result.avg_aov is not None else 0.0
-            
-            response_data.update({
-                "previous_aggregate_rpr": prev_rpr,
-                "previous_aggregate_aov": prev_aov
-            })
-        
-        logger.info(f"Successfully calculated simple averages: RPR={combined_rpr:.4f}, AOV={combined_aov:.2f}")
-        return CombinedAggregateMetricsResponse(**response_data)
-    
-    except Exception as e:
-        logger.error(f"Error fetching combined aggregate metrics: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"An error occurred while fetching combined aggregate metrics: {str(e)}"
-        )

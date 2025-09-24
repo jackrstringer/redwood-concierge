@@ -4,9 +4,7 @@ import requests
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import os
-
-from services.database_service import DatabaseService  # <-- add this import
-
+from services.database_service import DatabaseService  
 load_dotenv()
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ import {
   mockCampaigns,
   generateSparklineData,
 } from '@/data/mockData';
-import { fetchCampaigns, fetchAggregateMetrics, fetchFlowAggregateMetrics, fetchCombinedAggregateMetrics, fetchJobTiming } from '@/lib/apiHelper';
+import { fetchCampaigns, fetchDashboardKPI, fetchJobTiming } from '@/lib/apiHelper';
 import { Campaign } from '@/types/campaign';
 
 const Index = () => {
@@ -25,16 +25,8 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
-  const [previousRevenue, setPreviousRevenue] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0); 
-  const [aggregateRPR, setAggregateRPR] = useState(0);
-  const [aggregateAOV, setAggregateAOV] = useState(0);
-  const [previousAggregateRPR, setPreviousAggregateRPR] = useState(0);
-  const [previousAggregateAOV, setPreviousAggregateAOV] = useState(0);
-  const [campaignRevenue, setCampaignRevenue] = useState(0);
-  const [previousCampaignRevenue, setPreviousCampaignRevenue] = useState(0);
-  const [flowRevenue, setFlowRevenue] = useState(0);
-  const [previousFlowRevenue, setPreviousFlowRevenue] = useState(0);
+  const [kpiData, setKpiData] = useState<any>(null);
+  const [previousKpiData, setPreviousKpiData] = useState<any>(null);
   const [lastJobTime, setLastJobTime] = useState<string | null>(null);
 
   // 🔹 Map current timeframe to its "previous" version
@@ -44,57 +36,30 @@ const Index = () => {
     return 'previous_30_days';
   };
 
-  // 🔹 Load combined aggregate metrics (RPR and AOV from both campaigns and flows)
-  const loadAggregateMetrics = async (dateRange: string = selectedDateRange) => {
+  // 🔹 Load KPI data from the centralized function
+  const loadKPIMetrics = async (dateRange: string = selectedDateRange) => {
     try {
-      const metrics = await fetchCombinedAggregateMetrics(dateRange);
-      if (metrics) {
-        setAggregateRPR(metrics.aggregate_rpr);
-        setAggregateAOV(metrics.aggregate_aov);
+      const currentKPI = await fetchDashboardKPI(dateRange);
+      if (currentKPI) {
+        setKpiData(currentKPI);
+        console.log('KPI metrics fetched:', currentKPI);
+      }
 
-        if (compareEnabled && metrics.previous_aggregate_rpr !== undefined && metrics.previous_aggregate_aov !== undefined) {
-          setPreviousAggregateRPR(metrics.previous_aggregate_rpr);
-          setPreviousAggregateAOV(metrics.previous_aggregate_aov);
-        } else {
-          setPreviousAggregateRPR(0);
-          setPreviousAggregateAOV(0);
+      // Load previous KPI data for comparison if enabled
+      if (compareEnabled) {
+        const prevRange = getPreviousRange(dateRange);
+        const previousKPI = await fetchDashboardKPI(prevRange);
+        if (previousKPI) {
+          setPreviousKpiData(previousKPI);
         }
-
-        console.log('Combined metrics breakdown:', {
-          total_rpr: metrics.aggregate_rpr,
-          campaign_rpr: metrics.campaign_aggregate_rpr,
-          flow_rpr: metrics.flow_aggregate_rpr,
-          total_aov: metrics.aggregate_aov,
-          campaign_aov: metrics.campaign_aggregate_aov,
-          flow_aov: metrics.flow_aggregate_aov
-        });
+      } else {
+        setPreviousKpiData(null);
       }
     } catch (error: any) {
-      console.error('Failed to fetch combined aggregate metrics:', error);
-      // Fallback to mock data if API fails
-      setAggregateRPR(mockToplineKPIs.cards.rpr);
-      setAggregateAOV(mockToplineKPIs.cards.aov);
-    }
-  };
-
-  // 🔹 Load flow aggregate metrics
-  const loadFlowAggregateMetrics = async (dateRange: string = selectedDateRange) => {
-    try {
-      const flowMetrics = await fetchFlowAggregateMetrics(dateRange);
-      if (flowMetrics) {
-        setFlowRevenue(flowMetrics.total_revenue);
-
-        if (compareEnabled && flowMetrics.previous_total_revenue !== undefined) {
-          setPreviousFlowRevenue(flowMetrics.previous_total_revenue);
-        } else {
-          setPreviousFlowRevenue(0);
-        }
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch flow aggregate metrics:', error);
-      // Fallback to 0 if API fails
-      setFlowRevenue(0);
-      setPreviousFlowRevenue(0);
+      console.error('Failed to fetch KPI metrics:', error);
+      // Set fallback data
+      setKpiData(null);
+      setPreviousKpiData(null);
     }
   };
 
@@ -113,34 +78,12 @@ const Index = () => {
     }
   };
 
-  // 🔹 Load campaigns and handle compare logic
+  // 🔹 Load campaigns for table display
   const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     try {
       setIsLoadingCampaigns(true);
-      // fetch current
       const currentData = await fetchCampaigns(dateRange);
       setCampaigns(currentData);
-
-      // Total revenue calculation is handled in useEffect
-
-      // Calculate campaign revenue (total revenue for campaigns with type='campaign')
-      const campaignTypeData = currentData.filter(c => c.type === 'campaign');
-      const currentCampaignRevenue = campaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
-      setCampaignRevenue(currentCampaignRevenue);
-
-      // fetch previous only if compare is enabled
-      if (compareEnabled) {
-        const prevRange = getPreviousRange(dateRange);
-        const prevData = await fetchCampaigns(prevRange);
-        // Previous revenue calculation is handled in useEffect
-
-        // Calculate previous campaign revenue (total revenue for campaigns with type='campaign')
-        const prevCampaignTypeData = prevData.filter(c => c.type === 'campaign');
-        const prevCampaignRevenue = prevCampaignTypeData.reduce((sum, c) => sum + (c.revenue || 0), 0);
-        setPreviousCampaignRevenue(prevCampaignRevenue);
-      } else {
-        setPreviousCampaignRevenue(0);
-      }
     } catch (error: any) {
       console.error('Failed to fetch campaigns in index.tsx:', {
         message: error.message,
@@ -157,41 +100,22 @@ const Index = () => {
     document.documentElement.classList.add('dark');
     // initial load
     loadCampaigns();
-    loadAggregateMetrics();
-    loadFlowAggregateMetrics();
+    loadKPIMetrics();
     loadJobTiming();
   }, []);
 
-  // Update total revenue when campaign or flow revenue changes
-  useEffect(() => {
-    const campaignTotalRevenue = campaigns.reduce((sum, c) => sum + (c.revenue || 0), 0);
-    setTotalRevenue(campaignTotalRevenue + flowRevenue);
-  }, [campaigns, flowRevenue]);
-
-  // Update previous revenue calculation
-  useEffect(() => {
-    if (compareEnabled) {
-      // Calculate previous campaign revenue
-      const prevCampaignRevenue = campaigns.reduce((sum, c) => sum + (c.previous_revenue || 0), 0);
-      setPreviousRevenue(prevCampaignRevenue + previousFlowRevenue);
-    } else {
-      setPreviousRevenue(0);
-    }
-  }, [campaigns, previousFlowRevenue, compareEnabled]);
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
     loadCampaigns(range);
-    loadAggregateMetrics(range);
-    loadFlowAggregateMetrics(range);
+    loadKPIMetrics(range);
     loadJobTiming(range);
   };
 
   const handleCompareToggle = (enabled: boolean) => {
     setCompareEnabled(enabled);
     loadCampaigns(selectedDateRange);
-    loadAggregateMetrics(selectedDateRange);
-    loadFlowAggregateMetrics(selectedDateRange);
+    loadKPIMetrics(selectedDateRange);
   };
 
   const handleMetricClick = (metric: any) => {
@@ -204,33 +128,23 @@ const Index = () => {
     setSelectedMetric(null);
   };
 
-  // Calculate total email revenue
-  const totalEmailRevenue = campaigns
-    .filter(c => c.channel === 'email')
-    .reduce((sum, c) => sum + (c.revenue || 0), 0);
+  // Helper function to calculate delta percentage
+  const calculateDelta = (current: number, previous: number) => {
+    if (previous === 0) return 0;
+    return ((current - previous) / previous) * 100;
+  };
 
   // Calculate Email Rev Share as a decimal (0-1)
-  const emailRevShare = totalRevenue > 0
-    ? totalEmailRevenue / totalRevenue
+  const emailRevShare = kpiData?.total_revenue > 0
+    ? (kpiData?.email_revenue || 0) / kpiData.total_revenue
     : 0;
 
-  // Calculate previous period email revenue and delta
-  let previousEmailRevenue = 0;
-  let previousEmailRevShare = 0;
+  // Calculate previous Email Rev Share for comparison
   let emailRevDelta = undefined;
-
-  if (compareEnabled) {
-    // Calculate previous email revenue
-    previousEmailRevenue = campaigns
-      .filter(c => c.channel === 'email')
-      .reduce((sum, c) => sum + (c.previous_revenue || 0), 0);
-
-    // Calculate previous Email Rev Share as a decimal
-    previousEmailRevShare = previousRevenue > 0
-      ? previousEmailRevenue / previousRevenue
+  if (compareEnabled && previousKpiData) {
+    const previousEmailRevShare = previousKpiData?.total_revenue > 0
+      ? (previousKpiData?.email_revenue || 0) / previousKpiData.total_revenue
       : 0;
-
-    // Calculate the delta as percentage points (not percentage change)
     emailRevDelta = emailRevShare - previousEmailRevShare;
   }
 
@@ -255,20 +169,18 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
             <KPICard
               title="Total Revenue"
-              value={totalRevenue} // Now using the state variable
+              value={kpiData?.total_revenue || 0}
               format="currency"
               delta={
-                compareEnabled && previousRevenue > 0
+                compareEnabled && previousKpiData
                   ? {
-                    value:
-                      ((totalRevenue - previousRevenue) / previousRevenue) *
-                      100,
-                    isPositive: totalRevenue >= previousRevenue,
+                    value: calculateDelta(kpiData?.total_revenue || 0, previousKpiData?.total_revenue || 0),
+                    isPositive: (kpiData?.total_revenue || 0) >= (previousKpiData?.total_revenue || 0),
                   }
                   : undefined
               }
               sparkline={generateSparklineData()}
-              isHighPerformance={totalRevenue > previousRevenue}
+              isHighPerformance={(kpiData?.total_revenue || 0) > (previousKpiData?.total_revenue || 0)}
               onCardClick={handleMetricClick}
             />
             {/* Email Rev Share Card */}
@@ -285,17 +197,17 @@ const Index = () => {
             />
             <KPICard
               title="Campaign Rev"
-              value={campaignRevenue}
+              value={kpiData?.campaign_revenue || 0}
               format="currency"
-              delta={compareEnabled && previousCampaignRevenue > 0 ? {
-                value: ((campaignRevenue - previousCampaignRevenue) / previousCampaignRevenue),
-                isPositive: campaignRevenue >= previousCampaignRevenue
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.campaign_revenue || 0, previousKpiData?.campaign_revenue || 0),
+                isPositive: (kpiData?.campaign_revenue || 0) >= (previousKpiData?.campaign_revenue || 0)
               } : undefined}
               subtitle={
-                totalEmailRevenue > 0 ? (
+                (kpiData?.email_revenue || 0) > 0 ? (
                   <>
-                    <span className="sm:hidden">{((campaignRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email</span>
-                    <span className="hidden sm:inline">{((campaignRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email revenue</span>
+                    <span className="sm:hidden">{(((kpiData?.campaign_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email</span>
+                    <span className="hidden sm:inline">{(((kpiData?.campaign_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email revenue</span>
                   </>
                 ) : undefined
               }
@@ -304,17 +216,17 @@ const Index = () => {
             />
             <KPICard
               title="Flow Rev"
-              value={flowRevenue}
+              value={kpiData?.flow_revenue || 0}
               format="currency"
-              delta={compareEnabled && previousFlowRevenue > 0 ? {
-                value: ((flowRevenue - previousFlowRevenue) / previousFlowRevenue),
-                isPositive: flowRevenue >= previousFlowRevenue
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.flow_revenue || 0, previousKpiData?.flow_revenue || 0),
+                isPositive: (kpiData?.flow_revenue || 0) >= (previousKpiData?.flow_revenue || 0)
               } : undefined}
               subtitle={
-                totalEmailRevenue > 0 ? (
+                (kpiData?.email_revenue || 0) > 0 ? (
                   <>
-                    <span className="sm:hidden">{((flowRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email</span>
-                    <span className="hidden sm:inline">{((flowRevenue / totalEmailRevenue) * 100).toFixed(1)}% of email revenue</span>
+                    <span className="sm:hidden">{(((kpiData?.flow_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email</span>
+                    <span className="hidden sm:inline">{(((kpiData?.flow_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email revenue</span>
                   </>
                 ) : undefined
               }
@@ -323,22 +235,22 @@ const Index = () => {
             />
             <KPICard
               title="RPR"
-              value={aggregateRPR}
+              value={kpiData?.revenue_per_recipient || 0}
               format="percentage"
-              delta={compareEnabled && previousAggregateRPR > 0 ? {
-                value: ((aggregateRPR - previousAggregateRPR) / previousAggregateRPR),
-                isPositive: aggregateRPR >= previousAggregateRPR
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.revenue_per_recipient || 0, previousKpiData?.revenue_per_recipient || 0),
+                isPositive: (kpiData?.revenue_per_recipient || 0) >= (previousKpiData?.revenue_per_recipient || 0)
               } : undefined}
               sparkline={generateSparklineData()}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="AOV"
-              value={aggregateAOV}
+              value={kpiData?.average_order_value || 0}
               format="currency"
-              delta={compareEnabled && previousAggregateAOV > 0 ? {
-                value: ((aggregateAOV - previousAggregateAOV) / previousAggregateAOV),
-                isPositive: aggregateAOV >= previousAggregateAOV
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.average_order_value || 0, previousKpiData?.average_order_value || 0),
+                isPositive: (kpiData?.average_order_value || 0) >= (previousKpiData?.average_order_value || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
@@ -352,31 +264,31 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <KPICard
               title="Placed Order Rate"
-              value={mockToplineKPIs.cards.campaign_placed_order_rate}
+              value={kpiData?.campaign_place_order_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.campaign_placed_order_rate_pct,
-                isPositive: mockToplineKPIs.delta_prev.campaign_placed_order_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.campaign_place_order_rate || 0, previousKpiData?.campaign_place_order_rate || 0),
+                isPositive: (kpiData?.campaign_place_order_rate || 0) >= (previousKpiData?.campaign_place_order_rate || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Flow Placed Order Rate"
-              value={mockToplineKPIs.cards.flow_placed_order_rate}
+              value={kpiData?.flow_place_order_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockToplineKPIs.delta_prev.flow_placed_order_rate_pct,
-                isPositive: mockToplineKPIs.delta_prev.flow_placed_order_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.flow_place_order_rate || 0, previousKpiData?.flow_place_order_rate || 0),
+                isPositive: (kpiData?.flow_place_order_rate || 0) >= (previousKpiData?.flow_place_order_rate || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Campaigns Sent"
-              value={mockSendKPIs.campaigns_sent}
+              value={kpiData?.campaigns_sent || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockSendKPIs.delta_prev.campaigns_sent_pct,
-                isPositive: mockSendKPIs.delta_prev.campaigns_sent_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.campaigns_sent || 0, previousKpiData?.campaigns_sent || 0),
+                isPositive: (kpiData?.campaigns_sent || 0) >= (previousKpiData?.campaigns_sent || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
@@ -389,55 +301,55 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <KPICard
               title="Open Rate"
-              value={mockEmailKPIs.open_rate}
+              value={kpiData?.open_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockEmailKPIs.delta_prev.open_rate_pct,
-                isPositive: mockEmailKPIs.delta_prev.open_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.open_rate || 0, previousKpiData?.open_rate || 0),
+                isPositive: (kpiData?.open_rate || 0) >= (previousKpiData?.open_rate || 0)
               } : undefined}
-              isHighPerformance={mockEmailKPIs.open_rate > 0.25}
+              isHighPerformance={(kpiData?.open_rate || 0) > 0.25}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Click Rate"
-              value={mockEmailKPIs.click_rate}
+              value={kpiData?.click_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockEmailKPIs.delta_prev.click_rate_pct,
-                isPositive: mockEmailKPIs.delta_prev.click_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.click_rate || 0, previousKpiData?.click_rate || 0),
+                isPositive: (kpiData?.click_rate || 0) >= (previousKpiData?.click_rate || 0)
               } : undefined}
-              isHighPerformance={mockEmailKPIs.click_rate > 0.05}
+              isHighPerformance={(kpiData?.click_rate || 0) > 0.05}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Unsubscribe Rate"
-              value={mockEmailKPIs.unsubscribe_rate}
+              value={kpiData?.unsubscribe_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockEmailKPIs.delta_prev.unsubscribe_rate_pct,
-                isPositive: mockEmailKPIs.delta_prev.unsubscribe_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.unsubscribe_rate || 0, previousKpiData?.unsubscribe_rate || 0),
+                isPositive: (kpiData?.unsubscribe_rate || 0) >= (previousKpiData?.unsubscribe_rate || 0)
               } : undefined}
               isBadMetric={true}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Spam Rate"
-              value={mockEmailKPIs.spam_rate}
+              value={kpiData?.spam_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockEmailKPIs.delta_prev.spam_rate_pct,
-                isPositive: mockEmailKPIs.delta_prev.spam_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.spam_rate || 0, previousKpiData?.spam_rate || 0),
+                isPositive: (kpiData?.spam_rate || 0) >= (previousKpiData?.spam_rate || 0)
               } : undefined}
               isBadMetric={true}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Bounce Rate"
-              value={mockEmailKPIs.bounce_rate}
+              value={kpiData?.bounce_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockEmailKPIs.delta_prev.bounce_rate_pct,
-                isPositive: mockEmailKPIs.delta_prev.bounce_rate_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.bounce_rate || 0, previousKpiData?.bounce_rate || 0),
+                isPositive: (kpiData?.bounce_rate || 0) >= (previousKpiData?.bounce_rate || 0)
               } : undefined}
               isBadMetric={true}
               onCardClick={handleMetricClick}
@@ -452,41 +364,41 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <KPICard
               title="Total Emails Sent"
-              value={mockSendKPIs.total_emails_sent}
+              value={kpiData?.total_emails_sent || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockSendKPIs.delta_prev.total_emails_sent_pct,
-                isPositive: mockSendKPIs.delta_prev.total_emails_sent_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.total_emails_sent || 0, previousKpiData?.total_emails_sent || 0),
+                isPositive: (kpiData?.total_emails_sent || 0) >= (previousKpiData?.total_emails_sent || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Campaign Sends"
-              value={mockSendKPIs.campaign_sends}
+              value={kpiData?.campaign_sends || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockSendKPIs.delta_prev.campaign_sends_pct,
-                isPositive: mockSendKPIs.delta_prev.campaign_sends_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.campaign_sends || 0, previousKpiData?.campaign_sends || 0),
+                isPositive: (kpiData?.campaign_sends || 0) >= (previousKpiData?.campaign_sends || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Total Active Profiles"
-              value={mockListGrowthKPIs.total_active_profiles}
+              value={kpiData?.total_active_profiles || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockListGrowthKPIs.delta_prev.total_active_profiles_pct,
-                isPositive: mockListGrowthKPIs.delta_prev.total_active_profiles_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.total_active_profiles || 0, previousKpiData?.total_active_profiles || 0),
+                isPositive: (kpiData?.total_active_profiles || 0) >= (previousKpiData?.total_active_profiles || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Net Subscriber Growth"
-              value={mockListGrowthKPIs.net_growth}
+              value={kpiData?.net_subscriber_growth || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockListGrowthKPIs.delta_prev.net_growth_pct,
-                isPositive: mockListGrowthKPIs.delta_prev.net_growth_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.net_subscriber_growth || 0, previousKpiData?.net_subscriber_growth || 0),
+                isPositive: (kpiData?.net_subscriber_growth || 0) >= (previousKpiData?.net_subscriber_growth || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
@@ -494,42 +406,42 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
             <KPICard
               title="New Email Subscribers"
-              value={mockListGrowthKPIs.new_subscribers.email}
+              value={kpiData?.new_email_subscribers || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockListGrowthKPIs.delta_prev.new_subscribers_email_pct,
-                isPositive: mockListGrowthKPIs.delta_prev.new_subscribers_email_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.new_email_subscribers || 0, previousKpiData?.new_email_subscribers || 0),
+                isPositive: (kpiData?.new_email_subscribers || 0) >= (previousKpiData?.new_email_subscribers || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="New SMS Subscribers"
-              value={mockListGrowthKPIs.new_subscribers.sms}
+              value={kpiData?.new_sms_subscribers || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockListGrowthKPIs.delta_prev.new_subscribers_sms_pct,
-                isPositive: mockListGrowthKPIs.delta_prev.new_subscribers_sms_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.new_sms_subscribers || 0, previousKpiData?.new_sms_subscribers || 0),
+                isPositive: (kpiData?.new_sms_subscribers || 0) >= (previousKpiData?.new_sms_subscribers || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Email Unsubscribes"
-              value={mockListGrowthKPIs.unsubscribers.email}
+              value={kpiData?.email_unsubscribes || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockListGrowthKPIs.delta_prev.unsubscribers_email_pct,
-                isPositive: mockListGrowthKPIs.delta_prev.unsubscribers_email_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.email_unsubscribes || 0, previousKpiData?.email_unsubscribes || 0),
+                isPositive: (kpiData?.email_unsubscribes || 0) >= (previousKpiData?.email_unsubscribes || 0)
               } : undefined}
               isBadMetric={true}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="% Engaged (30d)"
-              value={mockListGrowthKPIs.engaged_pct_30d}
+              value={kpiData?.percentage_engaged || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockListGrowthKPIs.delta_prev.engaged_pct_30d_pct,
-                isPositive: mockListGrowthKPIs.delta_prev.engaged_pct_30d_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.percentage_engaged || 0, previousKpiData?.percentage_engaged || 0),
+                isPositive: (kpiData?.percentage_engaged || 0) >= (previousKpiData?.percentage_engaged || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
@@ -550,40 +462,40 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <KPICard
               title="Subscriptions Started"
-              value={mockSubscriptionKPIs.cards.subs_started}
+              value={kpiData?.subscriptions_started || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.subs_started_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.subs_started_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.subscriptions_started || 0, previousKpiData?.subscriptions_started || 0),
+                isPositive: (kpiData?.subscriptions_started || 0) >= (previousKpiData?.subscriptions_started || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Active Subscriptions"
-              value={mockSubscriptionKPIs.cards.subs_active}
+              value={kpiData?.active_subscriptions || 0}
               format="number"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.subs_active_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.subs_active_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.active_subscriptions || 0, previousKpiData?.active_subscriptions || 0),
+                isPositive: (kpiData?.active_subscriptions || 0) >= (previousKpiData?.active_subscriptions || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Average Subscription Cycles"
-              value={mockSubscriptionKPIs.cards.avg_cycles.toFixed(1)}
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.avg_cycles_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.avg_cycles_pct > 0
+              value={(kpiData?.average_subcription_cycles || 0).toFixed(1)}
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.average_subcription_cycles || 0, previousKpiData?.average_subcription_cycles || 0),
+                isPositive: (kpiData?.average_subcription_cycles || 0) >= (previousKpiData?.average_subcription_cycles || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Monthly Recurring Revenue (MRR)"
-              value={mockSubscriptionKPIs.cards.mrr}
+              value={kpiData?.monthly_recurring_revenue || 0}
               format="currency"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.mrr_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.mrr_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.monthly_recurring_revenue || 0, previousKpiData?.monthly_recurring_revenue || 0),
+                isPositive: (kpiData?.monthly_recurring_revenue || 0) >= (previousKpiData?.monthly_recurring_revenue || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
@@ -591,42 +503,42 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <KPICard
               title="Churn Rate"
-              value={mockSubscriptionKPIs.cards.churn_pct}
+              value={kpiData?.churn_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.churn_pct_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.churn_pct_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.churn_rate || 0, previousKpiData?.churn_rate || 0),
+                isPositive: (kpiData?.churn_rate || 0) >= (previousKpiData?.churn_rate || 0)
               } : undefined}
               isBadMetric={true}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Reactivation Rate"
-              value={mockSubscriptionKPIs.cards.reactivation_pct}
+              value={kpiData?.reactivation_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.reactivation_pct_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.reactivation_pct_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.reactivation_rate || 0, previousKpiData?.reactivation_rate || 0),
+                isPositive: (kpiData?.reactivation_rate || 0) >= (previousKpiData?.reactivation_rate || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Dunning Success Rate"
-              value={mockSubscriptionKPIs.cards.dunning_success_pct}
+              value={kpiData?.dunning_success_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.dunning_success_pct_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.dunning_success_pct_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.dunning_success_rate || 0, previousKpiData?.dunning_success_rate || 0),
+                isPositive: (kpiData?.dunning_success_rate || 0) >= (previousKpiData?.dunning_success_rate || 0)
               } : undefined}
               onCardClick={handleMetricClick}
             />
             <KPICard
               title="Skip Rate"
-              value={mockSubscriptionKPIs.cards.skip_rate_pct}
+              value={kpiData?.skip_rate || 0}
               format="percentage"
-              delta={compareEnabled ? {
-                value: mockSubscriptionKPIs.delta_prev.skip_rate_pct_pct,
-                isPositive: mockSubscriptionKPIs.delta_prev.skip_rate_pct_pct > 0
+              delta={compareEnabled && previousKpiData ? {
+                value: calculateDelta(kpiData?.skip_rate || 0, previousKpiData?.skip_rate || 0),
+                isPositive: (kpiData?.skip_rate || 0) >= (previousKpiData?.skip_rate || 0)
               } : undefined}
               isBadMetric={true}
               onCardClick={handleMetricClick}

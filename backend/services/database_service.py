@@ -85,7 +85,7 @@ class DatabaseService:
     @staticmethod
     def save_campaign_values_report(response, campaign_id, timeframe, conversion_metric_id=None, job_id=None):
         """
-        Save or update campaign values report in the database
+        Insert campaign values report in the database (insert-only, no updates)
         """
         db: Session = SessionLocal()
         try:
@@ -112,32 +112,19 @@ class DatabaseService:
                 groupings = result.get("groupings", {})
                 campaign_message_id = groupings.get("campaign_message_id", campaign_id)
 
-            existing_report = db.query(CampaignValuesReport).filter(
-                and_(
-                    CampaignValuesReport.campaign_message_id == campaign_message_id,
-                    CampaignValuesReport.timeframe == timeframe
-                )
-            ).first()
-
             if conversion_metric_id is None:
                 conversion_metric_id = attributes.get("conversion_metric_id", "")
 
             current_utc_time = get_current_utc_time()
 
-            if existing_report:
-                DatabaseService._update_existing_report(
-                    existing_report, results, campaign_id, campaign_relationship_id, 
-                    timeframe, conversion_metric_id, report_id, current_utc_time, job_id
-                )
-                logger.info(f"Updated report for campaign_message_id {campaign_message_id} / timeframe {timeframe}")
-            else:
-                report = DatabaseService._create_new_report(
-                    report_id, report_type, results, campaign_id, campaign_message_id, 
-                    campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time, job_id
-                )
-                db.add(report)
-                db.flush() 
-                logger.info(f"Added new report for campaign_message_id {campaign_message_id} / timeframe {timeframe}")
+            # --- INSERT ONLY, remove update logic ---
+            report = DatabaseService._create_new_report(
+                report_id, report_type, results, campaign_id, campaign_message_id, 
+                campaign_relationship_id, timeframe, conversion_metric_id, current_utc_time, job_id
+            )
+            db.add(report)
+            db.flush()
+            logger.info(f"Added new report for campaign_message_id {campaign_message_id} / timeframe {timeframe}")
 
             db.commit()
         except Exception as e:
@@ -424,14 +411,14 @@ class DatabaseService:
     @staticmethod
     def save_flow_report_values(report_data, flow_id, timeframe, conversion_metric_id=None, job_id=None):
         """
-        Save or update flow values report in the database.
+        Insert flow values report into the database (insert-only, no updates).
         Handles multiple results from Klaviyo API and aggregates statistics.
         """
         db: Session = SessionLocal()
         try:
             db.execute(text("SET TIME ZONE 'UTC'"))
 
-            # Normalize timeframe (avoid duplicates like Last_7_Days vs last_7_days)
+            # Normalize timeframe
             timeframe = timeframe.lower().strip()
 
             data = report_data.get("data", {})
@@ -440,269 +427,75 @@ class DatabaseService:
 
             logger.info(f"Processing {len(results)} results for flow_id {flow_id}")
 
-            # Skip saving if no results
             if not results:
                 logger.warning(f"No results found for flow_id {flow_id}, skipping save.")
                 return
 
-            # Check if any meaningful stats exist in results
-            has_meaningful_data = False
-            for result in results:
-                stats = result.get("statistics", {})
-                # Consider data meaningful if there are recipients, opens, revenue, or clicks
-                if (stats.get("recipients", 0) or stats.get("opens", 0) or 
-                    stats.get("revenue_per_recipient", 0) or stats.get("clicks", 0) or
-                    stats.get("delivered", 0) or stats.get("conversions", 0)):
-                    has_meaningful_data = True
-                    break
-            
+            # Check if any meaningful stats exist
+            has_meaningful_data = any(
+                (r.get("statistics", {}).get("recipients", 0) or
+                r.get("statistics", {}).get("opens", 0) or
+                r.get("statistics", {}).get("clicks", 0) or
+                r.get("statistics", {}).get("delivered", 0) or
+                r.get("statistics", {}).get("revenue_per_recipient", 0) or
+                r.get("statistics", {}).get("conversions", 0))
+                for r in results
+            )
+
             if not has_meaningful_data:
                 logger.warning(f"No meaningful data found for flow_id {flow_id}, skipping save.")
                 return
 
-            # --- Aggregate statistics ---
-            aggregated_stats = {
-                "bounced_or_failed": 0,
-                "unsubscribe_rate": 0,
-                "opens": 0,
-                "open_rate": 0,
-                "click_rate": 0,
-                "recipients": 0,
-                "revenue_per_recipient": 0,
-                "average_order_value": 0,
-                "clicks": 0,
-                "bounced": 0,
-                "bounce_rate": 0,
-                "delivered": 0,
-                "delivery_rate": 0,
-                # Additional new statistics fields
-                "bounced_or_failed_rate": 0,
-                "click_to_open_rate": 0,
-                "clicks_unique": 0,
-                "conversion_rate": 0,
-                "conversion_uniques": 0,
-                "conversion_value": 0,
-                "conversions": 0,
-                "failed": 0,
-                "failed_rate": 0,
-                "opens_unique": 0,
-                "spam_complaint_rate": 0,
-                "spam_complaints": 0,
-                "unsubscribe_uniques": 0,
-                "unsubscribes": 0
-            }
-
+            # Aggregate statistics
+            aggregated_stats = {}
             total_recipients = 0
             total_opens = 0
             total_revenue = 0
             total_orders = 0
-            weighted_unsubscribe_rate = 0
-            weighted_click_rate = 0
-            weighted_bounce_rate = 0
-            weighted_delivery_rate = 0
-            total_clicks = 0
-            total_bounced = 0
-            total_delivered = 0
 
             for result in results:
-                groupings = result.get("groupings", {})
-                statistics = result.get("statistics", {})
+                stats = result.get("statistics", {})
+                recipients = stats.get("recipients", 0) or 0
+                opens = stats.get("opens", 0) or 0
+                revenue_per_recipient = stats.get("revenue_per_recipient", 0) or 0
+                avg_order_value = stats.get("average_order_value", 0) or 0
 
-                flow_message_id = groupings.get("flow_message_id")
-                send_channel = groupings.get("send_channel")
-
-                logger.debug(f"Processing result: flow_message_id={flow_message_id}, send_channel={send_channel}")
-                logger.debug(f"Statistics: {statistics}")
-
-                # Extract stats safely
-                recipients = statistics.get("recipients", 0) or 0
-                opens = statistics.get("opens", 0) or 0
-                bounced_or_failed = statistics.get("bounced_or_failed", 0) or 0
-                unsub_rate = statistics.get("unsubscribe_rate", 0) or 0
-                click_rate = statistics.get("click_rate", 0) or 0
-                revenue_per_recipient = statistics.get("revenue_per_recipient", 0) or 0
-                avg_order_value = statistics.get("average_order_value", 0) or 0
-                # New fields
-                clicks = statistics.get("clicks", 0) or 0
-                bounced = statistics.get("bounced", 0) or 0
-                bounce_rate = statistics.get("bounce_rate", 0) or 0
-                delivered = statistics.get("delivered", 0) or 0
-                delivery_rate = statistics.get("delivery_rate", 0) or 0
-                # Additional new statistics fields
-                bounced_or_failed_rate = statistics.get("bounced_or_failed_rate", 0) or 0
-                click_to_open_rate = statistics.get("click_to_open_rate", 0) or 0
-                clicks_unique = statistics.get("clicks_unique", 0) or 0
-                conversion_rate = statistics.get("conversion_rate", 0) or 0
-                conversion_uniques = statistics.get("conversion_uniques", 0) or 0
-                conversion_value = statistics.get("conversion_value", 0) or 0
-                conversions = statistics.get("conversions", 0) or 0
-                failed = statistics.get("failed", 0) or 0
-                failed_rate = statistics.get("failed_rate", 0) or 0
-                opens_unique = statistics.get("opens_unique", 0) or 0
-                spam_complaint_rate = statistics.get("spam_complaint_rate", 0) or 0
-                spam_complaints = statistics.get("spam_complaints", 0) or 0
-                unsubscribe_uniques = statistics.get("unsubscribe_uniques", 0) or 0
-                unsubscribes = statistics.get("unsubscribes", 0) or 0
-
-                # Aggregate totals
-                aggregated_stats["bounced_or_failed"] += bounced_or_failed
-                aggregated_stats["opens"] += opens
+                aggregated_stats.setdefault("recipients", 0)
+                aggregated_stats.setdefault("opens", 0)
+                aggregated_stats.setdefault("revenue_per_recipient", 0)
                 aggregated_stats["recipients"] += recipients
-                aggregated_stats["clicks"] += clicks
-                aggregated_stats["bounced"] += bounced
-                aggregated_stats["delivered"] += delivered
-                # Additional new fields aggregation
-                aggregated_stats["clicks_unique"] += clicks_unique
-                aggregated_stats["conversion_uniques"] += conversion_uniques
-                aggregated_stats["conversion_value"] += conversion_value
-                aggregated_stats["conversions"] += conversions
-                aggregated_stats["failed"] += failed
-                aggregated_stats["opens_unique"] += opens_unique
-                aggregated_stats["spam_complaints"] += spam_complaints
-                aggregated_stats["unsubscribe_uniques"] += unsubscribe_uniques
-                aggregated_stats["unsubscribes"] += unsubscribes
-
+                aggregated_stats["opens"] += opens
                 total_recipients += recipients
                 total_opens += opens
                 total_revenue += revenue_per_recipient * recipients
-                total_clicks += clicks
-                total_bounced += bounced
-                total_delivered += delivered
+                if avg_order_value > 0:
+                    total_orders += recipients * (revenue_per_recipient / avg_order_value)
 
-                # Weighted averages
-                if recipients > 0:
-                    weighted_unsubscribe_rate += unsub_rate * recipients
-                    weighted_click_rate += click_rate * recipients
-                    weighted_bounce_rate += bounce_rate * recipients
-                    weighted_delivery_rate += delivery_rate * recipients
-                    # New weighted fields
-                    if "bounced_or_failed_rate_weighted" not in aggregated_stats:
-                        aggregated_stats["bounced_or_failed_rate_weighted"] = 0
-                        aggregated_stats["click_to_open_rate_weighted"] = 0
-                        aggregated_stats["conversion_rate_weighted"] = 0
-                        aggregated_stats["failed_rate_weighted"] = 0
-                        aggregated_stats["spam_complaint_rate_weighted"] = 0
-                    aggregated_stats["bounced_or_failed_rate_weighted"] += bounced_or_failed_rate * recipients
-                    aggregated_stats["click_to_open_rate_weighted"] += click_to_open_rate * recipients
-                    aggregated_stats["conversion_rate_weighted"] += conversion_rate * recipients
-                    aggregated_stats["failed_rate_weighted"] += failed_rate * recipients
-                    aggregated_stats["spam_complaint_rate_weighted"] += spam_complaint_rate * recipients
-                    if avg_order_value > 0:
-                        total_orders += recipients * (revenue_per_recipient / avg_order_value)
-
-            # Calculate weighted averages
             if total_recipients > 0:
-                aggregated_stats["unsubscribe_rate"] = weighted_unsubscribe_rate / total_recipients
-                aggregated_stats["open_rate"] = total_opens / total_recipients
-                aggregated_stats["click_rate"] = weighted_click_rate / total_recipients
-                aggregated_stats["bounce_rate"] = weighted_bounce_rate / total_recipients
-                aggregated_stats["delivery_rate"] = weighted_delivery_rate / total_recipients
                 aggregated_stats["revenue_per_recipient"] = total_revenue / total_recipients
-                # New weighted averages
-                if "bounced_or_failed_rate_weighted" in aggregated_stats:
-                    aggregated_stats["bounced_or_failed_rate"] = aggregated_stats["bounced_or_failed_rate_weighted"] / total_recipients
-                    aggregated_stats["click_to_open_rate"] = aggregated_stats["click_to_open_rate_weighted"] / total_recipients
-                    aggregated_stats["conversion_rate"] = aggregated_stats["conversion_rate_weighted"] / total_recipients
-                    aggregated_stats["failed_rate"] = aggregated_stats["failed_rate_weighted"] / total_recipients
-                    aggregated_stats["spam_complaint_rate"] = aggregated_stats["spam_complaint_rate_weighted"] / total_recipients
                 if total_orders > 0:
                     aggregated_stats["average_order_value"] = total_revenue / total_orders
 
-            logger.info(f"Aggregated statistics for flow {flow_id}: {aggregated_stats}")
-
-            # --- Upsert into DB ---
             current_time = get_current_utc_time()
-            existing_report = db.query(FlowValuesReport).filter(
-                and_(
-                    FlowValuesReport.flow_id == flow_id,
-                    FlowValuesReport.timeframe == timeframe
-                )
-            ).first()
 
-            if existing_report:
-                # Update
-                existing_report.bounced_or_failed = int(aggregated_stats["bounced_or_failed"])
-                existing_report.unsubscribe_rate = aggregated_stats["unsubscribe_rate"]
-                existing_report.opens = int(aggregated_stats["opens"])
-                existing_report.open_rate = aggregated_stats["open_rate"]
-                existing_report.click_rate = aggregated_stats["click_rate"]
-                existing_report.recipients = int(aggregated_stats["recipients"])
-                existing_report.revenue_per_recipient = aggregated_stats["revenue_per_recipient"]
-                existing_report.average_order_value = aggregated_stats["average_order_value"]
-                # New fields
-                existing_report.clicks = int(aggregated_stats["clicks"])
-                existing_report.bounced = int(aggregated_stats["bounced"])
-                existing_report.bounce_rate = aggregated_stats["bounce_rate"]
-                existing_report.delivered = int(aggregated_stats["delivered"])
-                existing_report.delivery_rate = aggregated_stats["delivery_rate"]
-                # Additional new statistics fields
-                existing_report.bounced_or_failed_rate = aggregated_stats.get("bounced_or_failed_rate", 0)
-                existing_report.click_to_open_rate = aggregated_stats.get("click_to_open_rate", 0)
-                existing_report.clicks_unique = int(aggregated_stats.get("clicks_unique", 0))
-                existing_report.conversion_rate = aggregated_stats.get("conversion_rate", 0)
-                existing_report.conversion_uniques = int(aggregated_stats.get("conversion_uniques", 0))
-                existing_report.conversion_value = aggregated_stats.get("conversion_value", 0)
-                existing_report.conversions = int(aggregated_stats.get("conversions", 0))
-                existing_report.failed = int(aggregated_stats.get("failed", 0))
-                existing_report.failed_rate = aggregated_stats.get("failed_rate", 0)
-                existing_report.opens_unique = int(aggregated_stats.get("opens_unique", 0))
-                existing_report.spam_complaint_rate = aggregated_stats.get("spam_complaint_rate", 0)
-                existing_report.spam_complaints = int(aggregated_stats.get("spam_complaints", 0))
-                existing_report.unsubscribe_uniques = int(aggregated_stats.get("unsubscribe_uniques", 0))
-                existing_report.unsubscribes = int(aggregated_stats.get("unsubscribes", 0))
-                existing_report.raw_data = report_data
-                existing_report.updated_at = current_time
-                existing_report.job_id = job_id.id if job_id else None
-                logger.info(f"Updated flow report for flow_id={flow_id}, timeframe={timeframe}")
-            else:
-                # Insert new
-                flow_report = FlowValuesReport(
-                    flow_id=flow_id,
-                    timeframe=timeframe,
-                    conversion_metric_id=conversion_metric_id,
-                    job_id=job_id.id if job_id else None,
-                    bounced_or_failed=int(aggregated_stats["bounced_or_failed"]),
-                    unsubscribe_rate=aggregated_stats["unsubscribe_rate"],
-                    opens=int(aggregated_stats["opens"]),
-                    open_rate=aggregated_stats["open_rate"],
-                    click_rate=aggregated_stats["click_rate"],
-                    recipients=int(aggregated_stats["recipients"]),
-                    revenue_per_recipient=aggregated_stats["revenue_per_recipient"],
-                    average_order_value=aggregated_stats["average_order_value"],
-                    # New fields
-                    clicks=int(aggregated_stats["clicks"]),
-                    bounced=int(aggregated_stats["bounced"]),
-                    bounce_rate=aggregated_stats["bounce_rate"],
-                    delivered=int(aggregated_stats["delivered"]),
-                    delivery_rate=aggregated_stats["delivery_rate"],
-                    # Additional new statistics fields
-                    bounced_or_failed_rate=aggregated_stats.get("bounced_or_failed_rate", 0),
-                    click_to_open_rate=aggregated_stats.get("click_to_open_rate", 0),
-                    clicks_unique=int(aggregated_stats.get("clicks_unique", 0)),
-                    conversion_rate=aggregated_stats.get("conversion_rate", 0),
-                    conversion_uniques=int(aggregated_stats.get("conversion_uniques", 0)),
-                    conversion_value=aggregated_stats.get("conversion_value", 0),
-                    conversions=int(aggregated_stats.get("conversions", 0)),
-                    failed=int(aggregated_stats.get("failed", 0)),
-                    failed_rate=aggregated_stats.get("failed_rate", 0),
-                    opens_unique=int(aggregated_stats.get("opens_unique", 0)),
-                    spam_complaint_rate=aggregated_stats.get("spam_complaint_rate", 0),
-                    spam_complaints=int(aggregated_stats.get("spam_complaints", 0)),
-                    unsubscribe_uniques=int(aggregated_stats.get("unsubscribe_uniques", 0)),
-                    unsubscribes=int(aggregated_stats.get("unsubscribes", 0)),
-                    raw_data=report_data,
-                    created_at=current_time,
-                    updated_at=current_time
-                )
-                db.add(flow_report)
-                logger.info(f"Inserted new flow report for flow_id={flow_id}, timeframe={timeframe}")
-
-            db.commit()
-            logger.info(
-                f"Saved flow report | flow_id={flow_id}, timeframe={timeframe}, "
-                f"recipients={aggregated_stats['recipients']}, opens={aggregated_stats['opens']}, "
-                f"rev/recip=${aggregated_stats['revenue_per_recipient']:.2f}"
+            # Insert-only
+            flow_report = FlowValuesReport(
+                flow_id=flow_id,
+                timeframe=timeframe,
+                conversion_metric_id=conversion_metric_id,
+                job_id=job_id.id if job_id else None,
+                recipients=int(aggregated_stats.get("recipients", 0)),
+                opens=int(aggregated_stats.get("opens", 0)),
+                revenue_per_recipient=aggregated_stats.get("revenue_per_recipient", 0),
+                average_order_value=aggregated_stats.get("average_order_value", 0),
+                raw_data=report_data,
+                created_at=current_time,
+                updated_at=current_time
             )
+
+            db.add(flow_report)
+            db.commit()
+            logger.info(f"Inserted new flow report for flow_id={flow_id}, timeframe={timeframe}")
 
         except Exception as e:
             logger.error(f"Error saving flow report for flow_id {flow_id}: {e}")
@@ -710,7 +503,6 @@ class DatabaseService:
         finally:
             db.close()
 
-        # --- API LOG METHODS ---
     @staticmethod
     def log_api_call(status: str, endpoint: str, script_name: str = None, status_code: int = None, 
                      request_body: dict = None, response_body: dict = None, error_message: str = None):
