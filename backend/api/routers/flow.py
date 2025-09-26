@@ -63,30 +63,36 @@ async def get_flows(
         elif timeframe == 'last_30_days':
             prev_timeframe = 'previous_30_days'
         
-        # Using view query for current data
+        # Using view query for current data - only get data from the latest job_id globally
         query = text("""
             SELECT 
-                id,
-                updated_at,
-                name,
-                status,
-                channel as trigger_type,
-                recipients,
-                open_rate,
-                click_rate,
-                (delivered * revenue_per_recipient) AS revenue,
-                revenue_per_recipient,
-                average_order_value,
-                clicks,
-                bounced,
-                bounce_rate,
-                delivered,
-                delivery_rate
+                vrd.id,
+                vrd.updated_at,
+                vrd.name,
+                vrd.status,
+                vrd.channel as trigger_type,
+                vrd.recipients,
+                vrd.open_rate,
+                vrd.click_rate,
+                (vrd.delivered * vrd.revenue_per_recipient) AS revenue,
+                vrd.revenue_per_recipient,
+                vrd.average_order_value,
+                vrd.clicks,
+                vrd.bounced,
+                vrd.bounce_rate,
+                vrd.delivered,
+                vrd.delivery_rate
             FROM 
-                vw_report_data
+                vw_report_data vrd
             WHERE 
-                type = 'flow'
-                AND timeframe = :timeframe
+                vrd.type = 'flow'
+                AND vrd.timeframe = :timeframe
+                AND vrd.job_id = (
+                    SELECT MAX(job_id)
+                    FROM vw_report_data v
+                    WHERE v.timeframe = :timeframe
+                      AND v.type = 'flow'
+                )
         """)
         
         # Execute the query for current data
@@ -97,13 +103,19 @@ async def get_flows(
         if prev_timeframe:
             prev_query = text("""
                 SELECT 
-                    id,
-                    (delivered * revenue_per_recipient) AS revenue
+                    vrd.id,
+                    (vrd.delivered * vrd.revenue_per_recipient) AS revenue
                 FROM 
-                    vw_report_data
+                    vw_report_data vrd
                 WHERE 
-                    type = 'flow'
-                    AND timeframe = :prev_timeframe
+                    vrd.type = 'flow'
+                    AND vrd.timeframe = :prev_timeframe
+                    AND vrd.job_id = (
+                        SELECT MAX(job_id)
+                        FROM vw_report_data v
+                        WHERE v.timeframe = :prev_timeframe
+                          AND v.type = 'flow'
+                    )
             """)
             
             prev_results = db.execute(prev_query, {"prev_timeframe": prev_timeframe}).fetchall()
@@ -113,7 +125,7 @@ async def get_flows(
         for row in results:
             flow_data = {
                 "id": row.id,
-                "updated_at": row.updated_at,
+                "updated_at": str(row.updated_at) if row.updated_at is not None else "",
                 "name": row.name,
                 "recipients": row.recipients if row.recipients is not None else 0,
                 "open_rate": float(row.open_rate) if row.open_rate is not None else 0.0,

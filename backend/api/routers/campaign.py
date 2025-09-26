@@ -71,33 +71,39 @@ async def get_campaigns(
         elif timeframe == 'last_30_days':
             prev_timeframe = 'previous_30_days'
         
-        # Using view query for current data
+        # Using view query for current data - only get data from the latest job_id globally
         query = text("""
             SELECT 
-                id,
-                updated_at,
-                name,
-                channel,
-                type,
-                status,
-                recipients,
-                open_rate,
-                click_rate,
-                (delivered * revenue_per_recipient) AS revenue,
-                revenue_per_recipient,
-                average_order_value,
-                placed_orders,
-                bounce_rate,
-                delivered,
-                delivery_rate,
-                bounced,
-                opens,
-                clicks
+                vrd.id,
+                vrd.updated_at,
+                vrd.name,
+                vrd.channel,
+                vrd.type,
+                vrd.status,
+                vrd.recipients,
+                vrd.open_rate,
+                vrd.click_rate,
+                (vrd.delivered * vrd.revenue_per_recipient) AS revenue,
+                vrd.revenue_per_recipient,
+                vrd.average_order_value,
+                vrd.placed_orders,
+                vrd.bounce_rate,
+                vrd.delivered,
+                vrd.delivery_rate,
+                vrd.bounced,
+                vrd.opens,
+                vrd.clicks
             FROM 
-                vw_report_data
+                vw_report_data vrd
             WHERE 
-                type = 'campaign'
-                AND timeframe = :timeframe
+                vrd.type = 'campaign'
+                AND vrd.timeframe = :timeframe
+                AND vrd.job_id = (
+                    SELECT MAX(job_id)
+                    FROM vw_report_data v
+                    WHERE v.timeframe = :timeframe
+                      AND v.type = 'campaign'
+                )
         """)
         
         # Execute the query for current data
@@ -108,13 +114,19 @@ async def get_campaigns(
         if prev_timeframe:
             prev_query = text("""
                 SELECT 
-                    id,
-                    (delivered * revenue_per_recipient) AS revenue
+                    vrd.id,
+                    (vrd.delivered * vrd.revenue_per_recipient) AS revenue
                 FROM 
-                    vw_report_data
+                    vw_report_data vrd
                 WHERE 
-                    type = 'campaign'
-                    AND timeframe = :prev_timeframe
+                    vrd.type = 'campaign'
+                    AND vrd.timeframe = :prev_timeframe
+                    AND vrd.job_id = (
+                        SELECT MAX(job_id)
+                        FROM vw_report_data v
+                        WHERE v.timeframe = :prev_timeframe
+                          AND v.type = 'campaign'
+                    )
             """)
             
             prev_results = db.execute(prev_query, {"prev_timeframe": prev_timeframe}).fetchall()
