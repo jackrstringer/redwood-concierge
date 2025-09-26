@@ -90,9 +90,9 @@ python -m campaign_script
 
 python -m flows_script   
 # For last 7 days (will process campaigns)
-python campaign_value_report_script.py --timeframe last_7_days
+python -m campaign_value_report_script.py --timeframe last_7_days
 # For last 30 days (will process campaigns)  
-python campaign_value_report_script.py --timeframe last_30_days
+python -m campaign_value_report_script.py --timeframe last_30_days
 ## for last 7 days
 python -m flows_value_report_script --timeframe last_7_days
 ## for last 30 days

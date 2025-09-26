@@ -413,6 +413,9 @@ class DatabaseService:
         """
         Insert flow values report into the database (insert-only, no updates).
         Handles multiple results from Klaviyo API and aggregates statistics.
+        - Sums count metrics across results
+        - Computes weighted averages for rate metrics (weighted by recipients when available)
+        - Computes revenue_per_recipient and average_order_value based on totals
         """
         db: Session = SessionLocal()
         try:
@@ -434,11 +437,11 @@ class DatabaseService:
             # Check if any meaningful stats exist
             has_meaningful_data = any(
                 (r.get("statistics", {}).get("recipients", 0) or
-                r.get("statistics", {}).get("opens", 0) or
-                r.get("statistics", {}).get("clicks", 0) or
-                r.get("statistics", {}).get("delivered", 0) or
-                r.get("statistics", {}).get("revenue_per_recipient", 0) or
-                r.get("statistics", {}).get("conversions", 0))
+                 r.get("statistics", {}).get("opens", 0) or
+                 r.get("statistics", {}).get("clicks", 0) or
+                 r.get("statistics", {}).get("delivered", 0) or
+                 r.get("statistics", {}).get("revenue_per_recipient", 0) or
+                 r.get("statistics", {}).get("conversions", 0))
                 for r in results
             )
 
@@ -446,48 +449,161 @@ class DatabaseService:
                 logger.warning(f"No meaningful data found for flow_id {flow_id}, skipping save.")
                 return
 
-            # Aggregate statistics
-            aggregated_stats = {}
+            # Define metric categories
+            count_metrics = [
+                "recipients", "opens", "clicks", "bounced", "delivered",
+                "bounced_or_failed", "clicks_unique", "conversion_uniques",
+                "conversions", "failed", "opens_unique", "spam_complaints",
+                "unsubscribe_uniques", "unsubscribes"
+            ]
+            rate_metrics = [
+                "open_rate", "click_rate", "bounce_rate", "delivery_rate",
+                "bounced_or_failed_rate", "click_to_open_rate", "conversion_rate",
+                "failed_rate", "spam_complaint_rate", "unsubscribe_rate"
+            ]
+            value_metrics = [
+                "revenue_per_recipient", "average_order_value", "conversion_value"
+            ]
+
+            # Aggregation accumulators
+            aggregated_counts = {m: 0 for m in count_metrics}
+            # Weighted sums for rates
+            weighted_rate_sums = {m: 0.0 for m in rate_metrics}
+            weighted_rate_weights = 0
+            # Totals for computing value metrics
             total_recipients = 0
-            total_opens = 0
-            total_revenue = 0
-            total_orders = 0
+            total_revenue = 0.0
+            total_orders_est = 0.0
 
             for result in results:
-                stats = result.get("statistics", {})
-                recipients = stats.get("recipients", 0) or 0
-                opens = stats.get("opens", 0) or 0
-                revenue_per_recipient = stats.get("revenue_per_recipient", 0) or 0
-                avg_order_value = stats.get("average_order_value", 0) or 0
+                stats = result.get("statistics", {}) or {}
+                recipients = (stats.get("recipients") or 0) or 0
 
-                aggregated_stats.setdefault("recipients", 0)
-                aggregated_stats.setdefault("opens", 0)
-                aggregated_stats.setdefault("revenue_per_recipient", 0)
-                aggregated_stats["recipients"] += recipients
-                aggregated_stats["opens"] += opens
+                # Sum counts
+                for m in count_metrics:
+                    v = stats.get(m)
+                    if v is not None:
+                        try:
+                            aggregated_counts[m] += int(v)
+                        except Exception:
+                            # Some counts may come as strings or decimals, coerce safely
+                            try:
+                                aggregated_counts[m] += int(float(v))
+                            except Exception:
+                                pass
+
+                # Weighted average for rates using recipients as weight when available
+                weight = recipients if recipients and recipients > 0 else 0
+                if weight > 0:
+                    for m in rate_metrics:
+                        rv = stats.get(m)
+                        if rv is not None:
+                            try:
+                                weighted_rate_sums[m] += float(rv) * weight
+                                # Only add weight once per result
+                            except Exception:
+                                pass
+                    weighted_rate_weights += weight
+
+                # Handle value metrics via totals
+                rpr = stats.get("revenue_per_recipient") or 0
+                aov = stats.get("average_order_value") or 0
+                conv_value = stats.get("conversion_value") or 0
+
+                # revenue total = recipients * revenue_per_recipient
+                try:
+                    total_revenue += float(rpr) * float(recipients)
+                except Exception:
+                    pass
+
+                # Estimate orders = revenue / AOV
+                try:
+                    if aov and float(aov) > 0:
+                        total_orders_est += (float(rpr) * float(recipients)) / float(aov)
+                except Exception:
+                    pass
+
                 total_recipients += recipients
-                total_opens += opens
-                total_revenue += revenue_per_recipient * recipients
-                if avg_order_value > 0:
-                    total_orders += recipients * (revenue_per_recipient / avg_order_value)
 
+            # Compute final aggregated values
+            aggregated_values = {}
+            aggregated_values.update(aggregated_counts)
+
+            # Rates as weighted averages
+            for m in rate_metrics:
+                if weighted_rate_weights > 0 and weighted_rate_sums[m] != 0:
+                    aggregated_values[m] = weighted_rate_sums[m] / weighted_rate_weights
+                else:
+                    aggregated_values[m] = None
+
+            # Value metrics
             if total_recipients > 0:
-                aggregated_stats["revenue_per_recipient"] = total_revenue / total_recipients
-                if total_orders > 0:
-                    aggregated_stats["average_order_value"] = total_revenue / total_orders
+                aggregated_values["revenue_per_recipient"] = total_revenue / total_recipients
+            else:
+                aggregated_values["revenue_per_recipient"] = None
+
+            if total_orders_est > 0:
+                try:
+                    aggregated_values["average_order_value"] = total_revenue / total_orders_est
+                except Exception:
+                    aggregated_values["average_order_value"] = None
+            else:
+                aggregated_values["average_order_value"] = None
+
+            # For conversion_value, sum directly if present in any results
+            # If not present, leave as None
+            conv_value_total = 0.0
+            conv_value_seen = False
+            for result in results:
+                stats = result.get("statistics", {}) or {}
+                cv = stats.get("conversion_value")
+                if cv is not None:
+                    try:
+                        conv_value_total += float(cv)
+                        conv_value_seen = True
+                    except Exception:
+                        pass
+            aggregated_values["conversion_value"] = conv_value_total if conv_value_seen else None
 
             current_time = get_current_utc_time()
 
-            # Insert-only
+            # Insert-only with full field mapping
             flow_report = FlowValuesReport(
                 flow_id=flow_id,
                 timeframe=timeframe,
-                conversion_metric_id=conversion_metric_id,
+                conversion_metric_id=conversion_metric_id or "",
                 job_id=job_id.id if job_id else None,
-                recipients=int(aggregated_stats.get("recipients", 0)),
-                opens=int(aggregated_stats.get("opens", 0)),
-                revenue_per_recipient=aggregated_stats.get("revenue_per_recipient", 0),
-                average_order_value=aggregated_stats.get("average_order_value", 0),
+                # counts
+                bounced_or_failed=aggregated_values.get("bounced_or_failed"),
+                opens=aggregated_values.get("opens"),
+                clicks=aggregated_values.get("clicks"),
+                bounced=aggregated_values.get("bounced"),
+                delivered=aggregated_values.get("delivered"),
+                clicks_unique=aggregated_values.get("clicks_unique"),
+                conversion_uniques=aggregated_values.get("conversion_uniques"),
+                conversions=aggregated_values.get("conversions"),
+                failed=aggregated_values.get("failed"),
+                opens_unique=aggregated_values.get("opens_unique"),
+                spam_complaints=aggregated_values.get("spam_complaints"),
+                unsubscribe_uniques=aggregated_values.get("unsubscribe_uniques"),
+                unsubscribes=aggregated_values.get("unsubscribes"),
+                recipients=aggregated_values.get("recipients"),
+                # rates
+                open_rate=aggregated_values.get("open_rate"),
+                click_rate=aggregated_values.get("click_rate"),
+                bounce_rate=aggregated_values.get("bounce_rate"),
+                delivery_rate=aggregated_values.get("delivery_rate"),
+                bounced_or_failed_rate=aggregated_values.get("bounced_or_failed_rate"),
+                click_to_open_rate=aggregated_values.get("click_to_open_rate"),
+                conversion_rate=aggregated_values.get("conversion_rate"),
+                failed_rate=aggregated_values.get("failed_rate"),
+                spam_complaint_rate=aggregated_values.get("spam_complaint_rate"),
+                unsubscribe_rate=aggregated_values.get("unsubscribe_rate"),
+                # values
+                revenue_per_recipient=aggregated_values.get("revenue_per_recipient"),
+                average_order_value=aggregated_values.get("average_order_value"),
+                conversion_value=aggregated_values.get("conversion_value"),
+                # meta
                 raw_data=report_data,
                 created_at=current_time,
                 updated_at=current_time
