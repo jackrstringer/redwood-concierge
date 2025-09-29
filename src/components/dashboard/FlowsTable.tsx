@@ -5,19 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Delta } from '@/components/ui/delta';
 import { format, toZonedTime } from 'date-fns-tz';
-import { Campaign } from '@/types/campaign';
+import { Flow } from '@/types/campaign';
 import { createFieldDelta } from '@/utils/deltaCalculations';
 
-interface CampaignsTableProps {
-  campaigns: Campaign[];
+interface FlowsTableProps {
+  flows: Flow[];
   isLoading?: boolean;
   dateRange?: string;
 }
 
-type SortField = keyof Campaign;
+type SortField = keyof Flow;
 type SortDirection = 'asc' | 'desc';
 
-export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoading = false, dateRange }) => {
+export const FlowsTable: React.FC<FlowsTableProps> = ({ flows, isLoading = false, dateRange }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -40,9 +40,9 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
     }
   };
 
-  const filteredAndSortedCampaigns = campaigns
-    .filter(campaign =>
-      campaign.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAndSortedFlows = flows
+    .filter(flow =>
+      flow.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       const aValue = a[sortField];
@@ -94,6 +94,7 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
       <td className="p-3"><Skeleton className="h-4 w-16" /></td>
       <td className="p-3"><Skeleton className="h-4 w-32" /></td>
       <td className="p-3"><Skeleton className="h-4 w-16" /></td>
+      <td className="p-3"><Skeleton className="h-4 w-16" /></td>
       <td className="p-3">
         <div className="flex items-start justify-between gap-2">
           <Skeleton className="h-4 w-12" />
@@ -109,12 +110,6 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
       <td className="p-3">
         <div className="flex items-start justify-between gap-2">
           <Skeleton className="h-4 w-10" />
-          <Skeleton className="h-3 w-10" />
-        </div>
-      </td>
-      <td className="p-3">
-        <div className="flex items-start justify-between gap-2">
-          <Skeleton className="h-4 w-12" />
           <Skeleton className="h-3 w-10" />
         </div>
       </td>
@@ -144,17 +139,17 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold dashboard-text">Campaigns</h3>
+            <h3 className="text-lg font-semibold dashboard-text">Flows</h3>
             {dateRange && (
               <p className="text-sm dashboard-text-muted">
-                Showing campaigns for: {getDateRangeDisplayName(dateRange)}
+                Showing flows for: {getDateRangeDisplayName(dateRange)}
               </p>
             )}
           </div>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dashboard-text-muted" />
             <Input
-              placeholder={isLoading ? "Loading campaigns..." : "Search campaigns..."}
+              placeholder={isLoading ? "Loading flows..." : "Search flows..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={isLoading}
@@ -194,6 +189,15 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
                     <SortIcon field="status" />
                   </button>
                 </th>
+                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[100px]">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    onClick={() => handleSort('trigger_type')}
+                  >
+                    Trigger
+                    <SortIcon field="trigger_type" />
+                  </button>
+                </th>
                 <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[120px]">
                   <button 
                     className="flex items-center gap-1 hover:text-foreground transition-colors"
@@ -219,15 +223,6 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
                   >
                     Click%
                     <SortIcon field="click_rate" />
-                  </button>
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[100px]">
-                  <button 
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    onClick={() => handleSort('placed_orders')}
-                  >
-                    Orders
-                    <SortIcon field="placed_orders" />
                   </button>
                 </th>
                 <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[120px]">
@@ -264,91 +259,83 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({ campaigns, isLoa
                 Array.from({ length: 5 }).map((_, index) => (
                   <SkeletonRow key={index} />
                 ))
-              ) : filteredAndSortedCampaigns.length === 0 ? (
+              ) : filteredAndSortedFlows.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="p-8 text-center text-muted-foreground">
-                    No campaigns found
+                    No flows found
                   </td>
                 </tr>
               ) : (
-                filteredAndSortedCampaigns.map((campaign) => (
+                filteredAndSortedFlows.map((flow) => (
                   <tr 
-                    key={campaign.id} 
+                    key={flow.id} 
                     className="border-b border-border hover:bg-muted/50 transition-colors"
                   >
                     <td className="p-3 text-sm text-foreground font-medium tabular-nums">
-                      {formatDate(campaign.updated_at)}
+                      {formatDate(flow.updated_at)}
                     </td>
                     <td className="p-3 text-sm text-foreground font-medium">
-                      {campaign.name}
+                      {flow.name}
                     </td>
                     <td className="p-3 text-sm text-muted-foreground">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        campaign.status === 'sent' ? 'bg-green-100 text-green-800' :
-                        campaign.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                        campaign.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        flow.status === 'live' ? 'bg-green-100 text-green-800' :
+                        flow.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                        flow.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
-                        {campaign.status || 'Unknown'}
+                        {flow.status || 'Unknown'}
                       </span>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          {campaign.recipients >= 1000 
-                            ? `${(campaign.recipients / 1000).toFixed(0)}k`
-                            : campaign.recipients.toLocaleString()
-                          }
-                        </div>
-                        <Delta delta={createFieldDelta(campaign, 'recipients')} />
-                      </div>
-                    </td>
-                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>{formatPercentage(campaign.open_rate)}</div>
-                        <Delta delta={createFieldDelta(campaign, 'open_rate')} />
-                      </div>
-                    </td>
-                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>{formatPercentage(campaign.click_rate)}</div>
-                        <Delta delta={createFieldDelta(campaign, 'click_rate')} />
-                      </div>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      <span className="capitalize">{flow.trigger_type || 'N/A'}</span>
                     </td>
                     <td className="p-3 text-sm text-muted-foreground tabular-nums">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          {campaign.placed_orders >= 1000 
-                            ? `${(campaign.placed_orders / 1000).toFixed(1)}k`
-                            : campaign.placed_orders.toLocaleString()
+                          {flow.recipients >= 1000 
+                            ? `${(flow.recipients / 1000).toFixed(0)}k`
+                            : flow.recipients.toLocaleString()
                           }
                         </div>
-                        <Delta delta={createFieldDelta(campaign, 'placed_orders')} />
+                        <Delta delta={createFieldDelta(flow, 'recipients')} />
+                      </div>
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>{formatPercentage(flow.open_rate)}</div>
+                        <Delta delta={createFieldDelta(flow, 'open_rate')} />
+                      </div>
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground tabular-nums">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>{formatPercentage(flow.click_rate)}</div>
+                        <Delta delta={createFieldDelta(flow, 'click_rate')} />
                       </div>
                     </td>
                     <td className="p-3 text-sm text-muted-foreground font-medium tabular-nums">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          ${campaign.revenue >= 1000000 
-                            ? `${(campaign.revenue / 1000000).toFixed(1)}M`
-                            : campaign.revenue >= 1000
-                            ? `${(campaign.revenue / 1000).toFixed(0)}k`
-                            : campaign.revenue.toFixed(0)
+                          ${flow.revenue >= 1000000 
+                            ? `${(flow.revenue / 1000000).toFixed(1)}M`
+                            : flow.revenue >= 1000
+                            ? `${(flow.revenue / 1000).toFixed(0)}k`
+                            : flow.revenue.toFixed(0)
                           }
                         </div>
-                        <Delta delta={createFieldDelta(campaign, 'revenue')} />
+                        <Delta delta={createFieldDelta(flow, 'revenue')} />
                       </div>
                     </td>
                     <td className="p-3 text-sm text-muted-foreground tabular-nums">
                       <div className="flex items-start justify-between gap-2">
-                        <div>${campaign.rpr.toFixed(2)}</div>
-                        <Delta delta={createFieldDelta(campaign, 'rpr')} />
+                        <div>${flow.rpr.toFixed(2)}</div>
+                        <Delta delta={createFieldDelta(flow, 'rpr')} />
                       </div>
                     </td>
                     <td className="p-3 text-sm text-muted-foreground tabular-nums">
                       <div className="flex items-start justify-between gap-2">
-                        <div>${campaign.aov.toFixed(0)}</div>
-                        <Delta delta={createFieldDelta(campaign, 'aov')} />
+                        <div>${flow.aov.toFixed(0)}</div>
+                        <Delta delta={createFieldDelta(flow, 'aov')} />
                       </div>
                     </td>
                   </tr>

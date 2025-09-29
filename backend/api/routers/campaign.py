@@ -31,6 +31,20 @@ class CampaignResponse(BaseModel):
     type: Optional[str] = None
     status: Optional[str] = None
     previous_revenue: Optional[float] = None
+    # Add all previous metrics fields
+    previous_recipients: Optional[int] = None
+    previous_open_rate: Optional[float] = None
+    previous_click_rate: Optional[float] = None
+    previous_placed_orders: Optional[float] = None
+    previous_rpr: Optional[float] = None
+    previous_aov: Optional[float] = None
+    previous_bounce_rate: Optional[float] = None
+    previous_delivered: Optional[int] = None
+    previous_delivery_rate: Optional[float] = None
+    previous_bounced: Optional[int] = None
+    previous_opens: Optional[int] = None
+    previous_clicks: Optional[int] = None
+    # Current metrics
     bounce_rate: Optional[float] = 0.0
     delivered: Optional[int] = 0
     delivery_rate: Optional[float] = 0.0
@@ -115,6 +129,18 @@ async def get_campaigns(
             prev_query = text("""
                 SELECT 
                     vrd.id,
+                    vrd.recipients,
+                    vrd.open_rate,
+                    vrd.click_rate,
+                    vrd.placed_orders,
+                    vrd.revenue_per_recipient,
+                    vrd.average_order_value,
+                    vrd.bounce_rate,
+                    vrd.delivered,
+                    vrd.delivery_rate,
+                    vrd.bounced,
+                    vrd.opens,
+                    vrd.clicks,
                     (vrd.delivered * vrd.revenue_per_recipient) AS revenue
                 FROM 
                     vw_report_data vrd
@@ -130,7 +156,24 @@ async def get_campaigns(
             """)
             
             prev_results = db.execute(prev_query, {"prev_timeframe": prev_timeframe}).fetchall()
-            previous_data = {row.id: row.revenue for row in prev_results}
+            # Create a nested dictionary for all previous metrics
+            previous_data = {}
+            for row in prev_results:
+                previous_data[row.id] = {
+                    'revenue': float(row.revenue) if row.revenue is not None else 0.0,
+                    'recipients': int(row.recipients) if row.recipients is not None else 0,
+                    'open_rate': float(row.open_rate) if row.open_rate is not None else 0.0,
+                    'click_rate': float(row.click_rate) if row.click_rate is not None else 0.0,
+                    'placed_orders': float(row.placed_orders) if row.placed_orders is not None else 0.0,
+                    'rpr': float(row.revenue_per_recipient) if row.revenue_per_recipient is not None else 0.0,
+                    'aov': float(row.average_order_value) if row.average_order_value is not None else 0.0,
+                    'bounce_rate': float(row.bounce_rate) if row.bounce_rate is not None else 0.0,
+                    'delivered': int(row.delivered) if row.delivered is not None else 0,
+                    'delivery_rate': float(row.delivery_rate) if row.delivery_rate is not None else 0.0,
+                    'bounced': int(row.bounced) if row.bounced is not None else 0,
+                    'opens': int(row.opens) if row.opens is not None else 0,
+                    'clicks': int(row.clicks) if row.clicks is not None else 0
+                }
         
         campaigns = []
         for row in results:
@@ -156,9 +199,22 @@ async def get_campaigns(
                 "clicks": int(row.clicks) if row.clicks is not None else 0
             }
             
-            # Add previous revenue if available
+            # Add all previous metrics if available
             if prev_timeframe and row.id in previous_data:
-                campaign_data["previous_revenue"] = float(previous_data[row.id]) if previous_data[row.id] is not None else 0.0
+                prev_metrics = previous_data[row.id]
+                campaign_data["previous_revenue"] = prev_metrics["revenue"]
+                campaign_data["previous_recipients"] = prev_metrics["recipients"]
+                campaign_data["previous_open_rate"] = prev_metrics["open_rate"]
+                campaign_data["previous_click_rate"] = prev_metrics["click_rate"]
+                campaign_data["previous_placed_orders"] = prev_metrics["placed_orders"]
+                campaign_data["previous_rpr"] = prev_metrics["rpr"]
+                campaign_data["previous_aov"] = prev_metrics["aov"]
+                campaign_data["previous_bounce_rate"] = prev_metrics["bounce_rate"]
+                campaign_data["previous_delivered"] = prev_metrics["delivered"]
+                campaign_data["previous_delivery_rate"] = prev_metrics["delivery_rate"]
+                campaign_data["previous_bounced"] = prev_metrics["bounced"]
+                campaign_data["previous_opens"] = prev_metrics["opens"]
+                campaign_data["previous_clicks"] = prev_metrics["clicks"]
                 
             campaigns.append(CampaignResponse(**campaign_data))
         

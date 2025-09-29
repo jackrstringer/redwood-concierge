@@ -1,8 +1,9 @@
 // lib/apiHelper.ts
 import axios from "axios";
-import { Campaign } from "@/types/campaign";
+import { Campaign, Flow } from "@/types/campaign";
 
 interface KPIResponse {
+  // Current metrics
   total_revenue: number;
   email_revenue: number;
   campaign_revenue: number;
@@ -33,21 +34,21 @@ interface KPIResponse {
   reactivation_rate: number;
   dunning_success_rate: number;
   skip_rate: number;
-}
-
-interface Flow {
-  id: string;
-  updated_at: string;
-  name: string;
-  recipients: number;
-  open_rate: number;
-  click_rate: number;
-  revenue: number;
-  rpr: number;
-  aov: number;
-  status: string;
-  trigger_type: string;
-  previous_revenue?: number;
+  // Previous metrics for delta calculations
+  previous_total_revenue?: number | null;
+  previous_email_revenue?: number | null;
+  previous_campaign_revenue?: number | null;
+  previous_flow_revenue?: number | null;
+  previous_revenue_per_recipient?: number | null;
+  previous_average_order_value?: number | null;
+  previous_campaign_place_order_rate?: number | null;
+  previous_flow_place_order_rate?: number | null;
+  previous_campaigns_sent?: number | null;
+  previous_open_rate?: number | null;
+  previous_click_rate?: number | null;
+  previous_unsubscribe_rate?: number | null;
+  previous_spam_rate?: number | null;
+  previous_bounce_rate?: number | null;
 }
 
 

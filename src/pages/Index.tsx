@@ -3,6 +3,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { MetricDetailModal } from '@/components/dashboard/MetricDetailModal';
 import { CampaignsTable } from '@/components/dashboard/CampaignsTable';
+import { FlowsTable } from '@/components/dashboard/FlowsTable';
 import { SubscriptionTable } from '@/components/dashboard/SubscriptionTable';
 import { SectionInsights } from '@/components/dashboard/SectionInsights';
 import {
@@ -14,8 +15,8 @@ import {
   mockCampaigns,
   generateSparklineData,
 } from '@/data/mockData';
-import { fetchCampaigns, fetchDashboardKPI, fetchJobTiming } from '@/lib/apiHelper';
-import { Campaign } from '@/types/campaign';
+import { fetchCampaigns, fetchFlows, fetchDashboardKPI, fetchJobTiming } from '@/lib/apiHelper';
+import { Campaign, Flow } from '@/types/campaign';
 
 const Index = () => {
   const [selectedDateRange, setSelectedDateRange] = useState('last_7_days');
@@ -25,6 +26,8 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true);
+  const [flows, setFlows] = useState<Flow[]>([]);
+  const [isLoadingFlows, setIsLoadingFlows] = useState(true);
   const [kpiData, setKpiData] = useState<any>(null);
   const [previousKpiData, setPreviousKpiData] = useState<any>(null);
   const [lastJobTime, setLastJobTime] = useState<string | null>(null);
@@ -43,17 +46,30 @@ const Index = () => {
       if (currentKPI) {
         setKpiData(currentKPI);
         console.log('KPI metrics fetched:', currentKPI);
-      }
-
-      // Load previous KPI data for comparison if enabled
-      if (compareEnabled) {
-        const prevRange = getPreviousRange(dateRange);
-        const previousKPI = await fetchDashboardKPI(prevRange);
-        if (previousKPI) {
-          setPreviousKpiData(previousKPI);
+        
+        // The KPI response now includes previous data for deltas
+        // Extract previous data into a separate object for existing logic compatibility
+        if (currentKPI.previous_total_revenue !== null) {
+          const extractedPreviousData = {
+            total_revenue: currentKPI.previous_total_revenue,
+            email_revenue: currentKPI.previous_email_revenue,
+            campaign_revenue: currentKPI.previous_campaign_revenue,
+            flow_revenue: currentKPI.previous_flow_revenue,
+            revenue_per_recipient: currentKPI.previous_revenue_per_recipient,
+            average_order_value: currentKPI.previous_average_order_value,
+            campaign_place_order_rate: currentKPI.previous_campaign_place_order_rate,
+            flow_place_order_rate: currentKPI.previous_flow_place_order_rate,
+            campaigns_sent: currentKPI.previous_campaigns_sent,
+            open_rate: currentKPI.previous_open_rate,
+            click_rate: currentKPI.previous_click_rate,
+            unsubscribe_rate: currentKPI.previous_unsubscribe_rate,
+            spam_rate: currentKPI.previous_spam_rate,
+            bounce_rate: currentKPI.previous_bounce_rate,
+          };
+          setPreviousKpiData(extractedPreviousData);
+        } else {
+          setPreviousKpiData(null);
         }
-      } else {
-        setPreviousKpiData(null);
       }
     } catch (error: any) {
       console.error('Failed to fetch KPI metrics:', error);
@@ -95,11 +111,29 @@ const Index = () => {
     }
   };
 
+  // 🔹 Load flows for table display
+  const loadFlows = async (dateRange: string = selectedDateRange) => {
+    try {
+      setIsLoadingFlows(true);
+      const currentData = await fetchFlows(dateRange);
+      setFlows(currentData);
+    } catch (error: any) {
+      console.error('Failed to fetch flows in index.tsx:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    } finally {
+      setIsLoadingFlows(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     document.documentElement.classList.add('dark');
     // initial load
     loadCampaigns();
+    loadFlows();
     loadKPIMetrics();
     loadJobTiming();
   }, []);
@@ -108,6 +142,7 @@ const Index = () => {
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
     loadCampaigns(range);
+    loadFlows(range);
     loadKPIMetrics(range);
     loadJobTiming(range);
   };
@@ -115,7 +150,8 @@ const Index = () => {
   const handleCompareToggle = (enabled: boolean) => {
     setCompareEnabled(enabled);
     loadCampaigns(selectedDateRange);
-    loadKPIMetrics(selectedDateRange);
+    loadFlows(selectedDateRange);
+    // KPI metrics already include previous data, no need to reload
   };
 
   const handleMetricClick = (metric: any) => {
@@ -131,7 +167,7 @@ const Index = () => {
   // Helper function to calculate delta percentage
   const calculateDelta = (current: number, previous: number) => {
     if (previous === 0) return 0;
-    return ((current - previous) / previous) * 100;
+    return ((current - previous) / previous) ;
   };
 
   // Calculate Email Rev Share as a decimal (0-1)
@@ -166,7 +202,7 @@ const Index = () => {
             Core Revenue Metrics
           </h2>
           <SectionInsights sectionName="Core Revenue Metrics" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <KPICard
               title="Total Revenue"
               value={kpiData?.total_revenue || 0}
@@ -559,6 +595,11 @@ const Index = () => {
         {/* Campaigns Table */}
         <section>
           <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
+        </section>
+
+        {/* Flows Table */}
+        <section>
+          <FlowsTable flows={flows} isLoading={isLoadingFlows} dateRange={selectedDateRange} />
         </section>
       </div>
     </div>
