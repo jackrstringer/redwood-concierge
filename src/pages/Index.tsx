@@ -3,7 +3,6 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { MetricDetailModal } from '@/components/dashboard/MetricDetailModal';
 import { CampaignsTable } from '@/components/dashboard/CampaignsTable';
-import { FlowsTable } from '@/components/dashboard/FlowsTable';
 import { SubscriptionTable } from '@/components/dashboard/SubscriptionTable';
 import { SectionInsights } from '@/components/dashboard/SectionInsights';
 import {
@@ -171,15 +170,15 @@ const Index = () => {
   };
 
   // Calculate Email Rev Share as a decimal (0-1)
-  const emailRevShare = kpiData?.total_revenue > 0
-    ? (kpiData?.email_revenue || 0) / kpiData.total_revenue
+  const emailRevShare = kpiData?.email_revenue > 0
+    ? (kpiData?.email_revenue || 0) / kpiData.campaign_revenue
     : 0;
 
   // Calculate previous Email Rev Share for comparison
   let emailRevDelta = undefined;
   if (compareEnabled && previousKpiData) {
-    const previousEmailRevShare = previousKpiData?.total_revenue > 0
-      ? (previousKpiData?.email_revenue || 0) / previousKpiData.total_revenue
+    const previousEmailRevShare = previousKpiData?.email_revenue > 0
+      ? (previousKpiData?.email_revenue || 0) / previousKpiData.campaign_revenue
       : 0;
     emailRevDelta = emailRevShare - previousEmailRevShare;
   }
@@ -327,6 +326,7 @@ const Index = () => {
                 isPositive: (kpiData?.campaigns_sent || 0) >= (previousKpiData?.campaigns_sent || 0)
               } : undefined}
               onCardClick={handleMetricClick}
+              
             />
           </div>
         </section>
@@ -597,10 +597,7 @@ const Index = () => {
           <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
         </section>
 
-        {/* Flows Table */}
-        <section>
-          <FlowsTable flows={flows} isLoading={isLoadingFlows} dateRange={selectedDateRange} />
-        </section>
+        
       </div>
     </div>
   );
