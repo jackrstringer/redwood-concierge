@@ -621,9 +621,19 @@ class DatabaseService:
 
     @staticmethod
     def log_api_call(status: str, endpoint: str, script_name: str = None, status_code: int = None, 
-                     request_body: dict = None, response_body: dict = None, error_message: str = None):
+                     request_body: dict = None, response_body: dict = None, error_message: str = None, job_id: int = None):
         """
         Store an API log entry in the database.
+        
+        Args:
+            status: Status of the API call (success/error)
+            endpoint: The API endpoint URL
+            script_name: Name of the script making the call
+            status_code: HTTP status code
+            request_body: Request payload
+            response_body: Response data
+            error_message: Error message if any
+            job_id: ID of the job this API call belongs to
         """
         db: Session = SessionLocal()
         try:
@@ -635,6 +645,7 @@ class DatabaseService:
                 request_body=request_body,
                 response_body=response_body,
                 error_message=error_message,
+                job_id=job_id,
                 created_at=get_current_utc_time()
             )
             db.add(log_entry)

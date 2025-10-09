@@ -58,7 +58,8 @@ def run_campaign_values_report(timeframe: str = "last_30_days"):
                 report = APIService.fetch_campaign_values_report(
                     campaign_id=campaign_id,
                     timeframe=timeframe,
-                    conversion_metric_id=env_vars["conversion_metric_id"]
+                    conversion_metric_id=env_vars["conversion_metric_id"],
+                    job_id=job_id.id if job_id else None
                 )
 
                 # save to DB (keeps existing data for other timeframes intact)

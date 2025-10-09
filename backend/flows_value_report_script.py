@@ -87,7 +87,8 @@ def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = Non
                 report = APIService.fetch_flow_report_values(
                     flow_id=flow_id,
                     timeframe=timeframe,
-                    conversion_metric_id=env_vars["conversion_metric_id"]
+                    conversion_metric_id=env_vars["conversion_metric_id"],
+                    job_id=job_id.id if job_id else None
                 )
 
                 # Check if report has data before saving

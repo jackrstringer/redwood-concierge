@@ -17,7 +17,7 @@ FLOW_BASE_URL = os.getenv("KLAVIYO_API_URL", "https://a.klaviyo.com/").rstrip("/
 
 class APIService:
     @staticmethod
-    def fetch_campaign_values_report(campaign_id: str, timeframe: str, conversion_metric_id: str, max_retries=3):
+    def fetch_campaign_values_report(campaign_id: str, timeframe: str, conversion_metric_id: str, max_retries=3, job_id: int = None):
         """
         Fetch campaign values report from Klaviyo API with retry handling + database logging
         """
@@ -85,7 +85,8 @@ class APIService:
                 status_code=response.status_code,
                 request_body=payload,
                 response_body=response_data,
-                error_message=response.text if response.status_code >= 400 else None
+                error_message=response.text if response.status_code >= 400 else None,
+                job_id=job_id
             )
 
             if response.status_code == 429:
@@ -118,7 +119,7 @@ class APIService:
         raise Exception(f"Failed to fetch campaign report after {max_retries} retries.")
 
     @staticmethod
-    def fetch_flow_report_values(flow_id: str, timeframe: str, conversion_metric_id: str, max_retries=3):
+    def fetch_flow_report_values(flow_id: str, timeframe: str, conversion_metric_id: str, max_retries=3, job_id: int = None):
         """
         Fetch flow values report from Klaviyo API with retry handling + database logging
         """
@@ -188,7 +189,8 @@ class APIService:
                 status_code=response.status_code,
                 request_body=body,
                 response_body=response_data,
-                error_message=response.text if response.status_code >= 400 else None
+                error_message=response.text if response.status_code >= 400 else None,
+                job_id=job_id
             )
 
             if response.status_code == 429:
