@@ -37,14 +37,8 @@ def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = Non
     # ensure tables exist
     Base.metadata.create_all(bind=engine)
     
-    # get flows from DB
-    all_flow_ids = DatabaseService.get_top_flow_ids()
-    
-    # Prioritize flows that are more likely to have data
-    # Put SfcWVx first since we know it has data
-    priority_flows = ['SfcWVx']  # Known active flow
-    other_flows = [fid for fid in all_flow_ids if fid not in priority_flows]
-    flow_ids = priority_flows + other_flows
+    # get live metric flows from DB (filtered by status='live' and trigger_type='Metric')
+    flow_ids = DatabaseService.get_top_flow_ids()
     
     # Limit flows if specified
     if max_flows:
@@ -52,10 +46,10 @@ def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = Non
         logger.info(f"Limited to first {max_flows} flows for testing")
     
     if not flow_ids:
-        logger.warning("No flow IDs found in the database. Exiting.")
+        logger.warning("No live metric flows found in the database (status='live' and trigger_type='Metric'). Exiting.")
         return
 
-    logger.info(f"Will process {len(flow_ids)} flows for timeframe: {timeframe}")
+    logger.info(f"Will process {len(flow_ids)} live metric flows for timeframe: {timeframe}")
     
     # create a job record
     job_id = DatabaseService.create_new_job(
@@ -91,23 +85,16 @@ def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = Non
                     job_id=job_id.id if job_id else None
                 )
 
-                # Check if report has data before saving
+                # Save report data if API call was successful
                 if report:
-                    results = report.get("data", {}).get("attributes", {}).get("results", [])
+                    logger.info(f"Flow {flow_id} returned data, checking for results...")
                     
-                    # Check for meaningful data
-                    has_meaningful_data = False
+                    # Check if the report has actual results before claiming it will be saved
+                    data = report.get("data", {})
+                    attributes = data.get("attributes", {})
+                    results = attributes.get("results", [])
+                    
                     if results:
-                        for result in results:
-                            stats = result.get("statistics", {})
-                            if (stats.get("recipients", 0) or stats.get("opens", 0) or 
-                                stats.get("clicks", 0) or stats.get("delivered", 0) or
-                                stats.get("revenue_per_recipient", 0) or stats.get("conversions", 0)):
-                                has_meaningful_data = True
-                                break
-                    
-                    if has_meaningful_data:
-                        logger.info(f"Flow {flow_id} has meaningful data, saving...")
                         # save to DB
                         DatabaseService.save_flow_report_values(
                             report, flow_id, timeframe,
@@ -115,9 +102,9 @@ def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = Non
                             job_id=job_id
                         )
                         saved_count += 1
-                        logger.info(f"✓ Successfully saved flow ID: {flow_id}")
+                        logger.info(f"✓ Successfully saved flow ID: {flow_id} with {len(results)} results")
                     else:
-                        logger.info(f"Flow {flow_id} has no meaningful data, skipping")
+                        logger.warning(f"Flow {flow_id} has no results for timeframe {timeframe}, skipping save")
                         skipped_count += 1
                 else:
                     logger.warning(f"No report data for flow {flow_id}")

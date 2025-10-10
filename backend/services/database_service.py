@@ -396,14 +396,23 @@ class DatabaseService:
     @staticmethod
     def get_top_flow_ids():
         """
-        Get top flow IDs from the database ordered by creation date
+        Get flow IDs from the database where status='live' and trigger_type='Metric'
+        ordered by creation date descending
         """
         db: Session = SessionLocal()
         try:
-            flows = db.query(Flow.id).order_by(Flow.created.desc()).all()
-            return [f[0] for f in flows]
+            flows = (
+                db.query(Flow.id)
+                .filter(Flow.status == 'live')
+                .filter(Flow.trigger_type == 'Metric')
+                .order_by(Flow.created.desc())
+                .all()
+            )
+            flow_ids = [f[0] for f in flows]
+            logger.info(f"Found {len(flow_ids)} live metric flows")
+            return flow_ids
         except Exception as e:
-            logger.error(f"Error fetching flow IDs: {e}")
+            logger.error(f"Error fetching live metric flow IDs: {e}")
             return []
         finally:
             db.close()
@@ -432,21 +441,6 @@ class DatabaseService:
 
             if not results:
                 logger.warning(f"No results found for flow_id {flow_id}, skipping save.")
-                return
-
-            # Check if any meaningful stats exist
-            has_meaningful_data = any(
-                (r.get("statistics", {}).get("recipients", 0) or
-                 r.get("statistics", {}).get("opens", 0) or
-                 r.get("statistics", {}).get("clicks", 0) or
-                 r.get("statistics", {}).get("delivered", 0) or
-                 r.get("statistics", {}).get("revenue_per_recipient", 0) or
-                 r.get("statistics", {}).get("conversions", 0))
-                for r in results
-            )
-
-            if not has_meaningful_data:
-                logger.warning(f"No meaningful data found for flow_id {flow_id}, skipping save.")
                 return
 
             # Define metric categories
