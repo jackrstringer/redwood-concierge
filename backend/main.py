@@ -5,6 +5,7 @@ app = FastAPI(title="Klaviyo Campaign API")
 origins = [
     "http://localhost:8080",
     "http://localhost:8000",
+    "http://ec2-13-53-199-145.eu-north-1.compute.amazonaws.com:8080"
 ]
 # Import after creating the app
 from api.routers import campaign, flow, jobs, kpi
