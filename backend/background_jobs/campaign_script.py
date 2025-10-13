@@ -1,5 +1,7 @@
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-import os
+
 import requests
 from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, String, Boolean

@@ -17,13 +17,14 @@ def run_all_reports():
         f.write(header)
 
         commands = [
-            ["python", "-m", "campaign_script"],
-            ["python", "-m", "flows_script"],
-            ["python", "-m", "campaign_value_report_script", "--timeframe", "last_7_days"],
-            ["python", "-m", "campaign_value_report_script", "--timeframe", "last_30_days"],
-            ["python", "-m", "flows_value_report_script", "--timeframe", "last_7_days"],
-            ["python", "-m", "flows_value_report_script", "--timeframe", "last_30_days"],
+            ["python", "campaign_script.py"],
+            ["python", "flows_script.py"],
+            ["python", "campaign_value_report_script.py", "--timeframe", "last_7_days"],
+            ["python", "campaign_value_report_script.py", "--timeframe", "last_30_days"],
+            ["python", "flows_value_report_script.py", "--timeframe", "last_7_days"],
+            ["python", "flows_value_report_script.py", "--timeframe", "last_30_days"],
         ]
+
 
         for cmd in commands:
             section_header = f"\n🚀 Running: {' '.join(cmd)}\n{'='*60}\n"
