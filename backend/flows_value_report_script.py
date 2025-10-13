@@ -87,25 +87,15 @@ def run_flow_values_report(timeframe: str = "last_30_days", max_flows: int = Non
 
                 # Save report data if API call was successful
                 if report:
-                    logger.info(f"Flow {flow_id} returned data, checking for results...")
-                    
-                    # Check if the report has actual results before claiming it will be saved
-                    data = report.get("data", {})
-                    attributes = data.get("attributes", {})
-                    results = attributes.get("results", [])
-                    
-                    if results:
-                        # save to DB
-                        DatabaseService.save_flow_report_values(
-                            report, flow_id, timeframe,
-                            conversion_metric_id=env_vars["conversion_metric_id"],
-                            job_id=job_id
-                        )
-                        saved_count += 1
-                        logger.info(f"✓ Successfully saved flow ID: {flow_id} with {len(results)} results")
-                    else:
-                        logger.warning(f"Flow {flow_id} has no results for timeframe {timeframe}, skipping save")
-                        skipped_count += 1
+                    logger.info(f"Flow {flow_id} returned data, saving...")
+                    # save to DB (will handle empty results internally)
+                    DatabaseService.save_flow_report_values(
+                        report, flow_id, timeframe,
+                        conversion_metric_id=env_vars["conversion_metric_id"],
+                        job_id=job_id
+                    )
+                    saved_count += 1
+                    logger.info(f"✓ Successfully saved flow ID: {flow_id}")
                 else:
                     logger.warning(f"No report data for flow {flow_id}")
                     skipped_count += 1

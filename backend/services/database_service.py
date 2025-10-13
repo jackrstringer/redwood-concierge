@@ -440,8 +440,7 @@ class DatabaseService:
             logger.info(f"Processing {len(results)} results for flow_id {flow_id}")
 
             if not results:
-                logger.warning(f"No results found for flow_id {flow_id}, skipping save.")
-                return
+                logger.info(f"No results found for flow_id {flow_id}, saving empty record with NULL values.")
 
             # Define metric categories
             count_metrics = [
