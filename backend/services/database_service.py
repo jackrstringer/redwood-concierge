@@ -404,7 +404,7 @@ class DatabaseService:
             flows = (
                 db.query(Flow.id)
                 .filter(Flow.status == 'live')
-                .filter(Flow.trigger_type == 'Metric')
+                #.filter(Flow.trigger_type == 'Metric')
                 .order_by(Flow.created.desc())
                 .all()
             )
