@@ -11,7 +11,6 @@ import {
   mockSendKPIs,
   mockListGrowthKPIs,
   mockSubscriptionKPIs,
-  mockCampaigns,
   generateSparklineData,
 } from '@/data/mockData';
 import { fetchCampaigns, fetchFlows, fetchDashboardKPI, fetchJobTiming } from '@/lib/apiHelper';
@@ -31,23 +30,18 @@ const Index = () => {
   const [previousKpiData, setPreviousKpiData] = useState<any>(null);
   const [lastJobTime, setLastJobTime] = useState<string | null>(null);
 
-  // 🔹 Map current timeframe to its "previous" version
   const getPreviousRange = (range: string) => {
     if (range === 'last_7_days') return 'previous_7_days';
     if (range === 'last_30_days') return 'previous_30_days';
     return 'previous_30_days';
   };
 
-  // 🔹 Load KPI data from the centralized function
   const loadKPIMetrics = async (dateRange: string = selectedDateRange) => {
     try {
       const currentKPI = await fetchDashboardKPI(dateRange);
       if (currentKPI) {
         setKpiData(currentKPI);
-        console.log('KPI metrics fetched:', currentKPI);
         
-        // The KPI response now includes previous data for deltas
-        // Extract previous data into a separate object for existing logic compatibility
         if (currentKPI.previous_total_revenue !== null) {
           const extractedPreviousData = {
             total_revenue: currentKPI.previous_total_revenue,
@@ -72,13 +66,11 @@ const Index = () => {
       }
     } catch (error: any) {
       console.error('Failed to fetch KPI metrics:', error);
-      // Set fallback data
       setKpiData(null);
       setPreviousKpiData(null);
     }
   };
 
-  // 🔹 Load job timing
   const loadJobTiming = async (dateRange: string = selectedDateRange) => {
     try {
       const jobTiming = await fetchJobTiming(dateRange, 'campaign_report_values');
@@ -93,7 +85,6 @@ const Index = () => {
     }
   };
 
-  // 🔹 Load campaigns for table display
   const loadCampaigns = async (dateRange: string = selectedDateRange) => {
     try {
       setIsLoadingCampaigns(true);
@@ -110,7 +101,6 @@ const Index = () => {
     }
   };
 
-  // 🔹 Load flows for table display
   const loadFlows = async (dateRange: string = selectedDateRange) => {
     try {
       setIsLoadingFlows(true);
@@ -130,13 +120,11 @@ const Index = () => {
   useEffect(() => {
     setMounted(true);
     document.documentElement.classList.add('dark');
-    // initial load
     loadCampaigns();
     loadFlows();
     loadKPIMetrics();
     loadJobTiming();
   }, []);
-
 
   const handleDateRangeChange = (range: string) => {
     setSelectedDateRange(range);
@@ -150,7 +138,6 @@ const Index = () => {
     setCompareEnabled(enabled);
     loadCampaigns(selectedDateRange);
     loadFlows(selectedDateRange);
-    // KPI metrics already include previous data, no need to reload
   };
 
   const handleMetricClick = (metric: any) => {
@@ -163,18 +150,15 @@ const Index = () => {
     setSelectedMetric(null);
   };
 
-  // Helper function to calculate delta percentage
   const calculateDelta = (current: number, previous: number) => {
     if (previous === 0) return 0;
-    return ((current - previous) / previous) ;
+    return ((current - previous) / previous);
   };
 
-  // Calculate Email Rev Share as a decimal (0-1)
   const emailRevShare = kpiData?.email_revenue > 0
     ? (kpiData?.email_revenue || 0) / kpiData.campaign_revenue
     : 0;
 
-  // Calculate previous Email Rev Share for comparison
   let emailRevDelta = undefined;
   if (compareEnabled && previousKpiData) {
     const previousEmailRevShare = previousKpiData?.email_revenue > 0
@@ -195,7 +179,6 @@ const Index = () => {
         lastJobTime={lastJobTime}
       />
       <div className="p-4 sm:p-6 space-y-8 max-w-full overflow-x-hidden">
-        {/* Core Revenue Metrics */}
         <section>
           <h2 className="text-xl font-semibold dashboard-text mb-4">
             Core Revenue Metrics
@@ -218,7 +201,6 @@ const Index = () => {
               isHighPerformance={(kpiData?.total_revenue || 0) > (previousKpiData?.total_revenue || 0)}
               onCardClick={handleMetricClick}
             />
-            {/* Email Rev Share Card */}
             <KPICard
               title="Email Rev Share"
               value={emailRevShare}
@@ -239,10 +221,10 @@ const Index = () => {
                 isPositive: (kpiData?.campaign_revenue || 0) >= (previousKpiData?.campaign_revenue || 0)
               } : undefined}
               subtitle={
-                (kpiData?.email_revenue || 0) > 0 ? (
+                (kpiData?.total_revenue || 0) > 0 ? (
                   <>
-                    <span className="sm:hidden">{(((kpiData?.campaign_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email</span>
-                    <span className="hidden sm:inline">{(((kpiData?.campaign_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email revenue</span>
+                    <span className="sm:hidden">{(((kpiData?.campaign_revenue || 0) / kpiData.total_revenue) * 100).toFixed(1)}% of total</span>
+                    <span className="hidden sm:inline">{(((kpiData?.campaign_revenue || 0) / kpiData.total_revenue) * 100).toFixed(1)}% of total revenue</span>
                   </>
                 ) : undefined
               }
@@ -258,10 +240,10 @@ const Index = () => {
                 isPositive: (kpiData?.flow_revenue || 0) >= (previousKpiData?.flow_revenue || 0)
               } : undefined}
               subtitle={
-                (kpiData?.email_revenue || 0) > 0 ? (
+                (kpiData?.total_revenue || 0) > 0 ? (
                   <>
-                    <span className="sm:hidden">{(((kpiData?.flow_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email</span>
-                    <span className="hidden sm:inline">{(((kpiData?.flow_revenue || 0) / kpiData.email_revenue) * 100).toFixed(1)}% of email revenue</span>
+                    <span className="sm:hidden">{(((kpiData?.flow_revenue || 0) / kpiData.total_revenue) * 100).toFixed(1)}% of total</span>
+                    <span className="hidden sm:inline">{(((kpiData?.flow_revenue || 0) / kpiData.total_revenue) * 100).toFixed(1)}% of total revenue</span>
                   </>
                 ) : undefined
               }
@@ -292,7 +274,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Performance Metrics */}
         <section>
           <h2 className="text-xl font-semibold dashboard-text mb-4">Performance Metrics</h2>
           <SectionInsights sectionName="Performance Metrics" />
@@ -326,12 +307,10 @@ const Index = () => {
                 isPositive: (kpiData?.campaigns_sent || 0) >= (previousKpiData?.campaigns_sent || 0)
               } : undefined}
               onCardClick={handleMetricClick}
-              
             />
           </div>
         </section>
 
-        {/* Email KPIs */}
         <section>
           <h2 className="text-xl font-semibold dashboard-text mb-4">Email Performance</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -393,7 +372,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Send Volume & List Growth */}
         <section>
           <h2 className="text-xl font-semibold dashboard-text mb-4">Send Volume & List Growth</h2>
           <SectionInsights sectionName="Send Volume Metrics" />
@@ -484,14 +462,12 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Metric Detail Modal */}
         <MetricDetailModal
           isOpen={isModalOpen}
           onClose={handleModalClose}
           metric={selectedMetric}
         />
 
-        {/* Subscription Insights */}
         <section>
           <h2 className="text-xl font-semibold dashboard-text mb-4">Recharge Subscription Insights</h2>
           <SectionInsights sectionName="Subscription Metrics" />
@@ -592,12 +568,9 @@ const Index = () => {
           <SubscriptionTable products={mockSubscriptionKPIs.by_product} />
         </section>
 
-        {/* Campaigns Table */}
         <section>
           <CampaignsTable campaigns={campaigns} isLoading={isLoadingCampaigns} dateRange={selectedDateRange} />
         </section>
-
-        
       </div>
     </div>
   );

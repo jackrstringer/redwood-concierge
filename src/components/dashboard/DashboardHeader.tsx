@@ -85,7 +85,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="gap-2 dashboard-text border-dashboard-border bg-dashboard-card hover:bg-muted/50 text-xs sm:text-sm w-full sm:w-auto"
+                  className="gap-2 dashboard-text border-dashboard-border bg-dashboard-card hover:bg-white hover:text-black text-xs sm:text-sm w-full sm:w-auto"
                 >
                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="truncate">{selectedRangeLabel}</span>
@@ -100,7 +100,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => handleRangeChange(option.value)}
-                    className={`dashboard-text hover:bg-muted/50 ${
+                    className={`dashboard-text hover:bg-white hover:text-black ${
                       selectedRange === option.value ? 'bg-muted/30' : ''
                     }`}
                   >
@@ -111,14 +111,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </DropdownMenu>
 
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={handleCompareToggle}
-              className="gap-2 dashboard-text hover:bg-muted/50 text-xs sm:text-sm w-full sm:w-auto justify-start sm:justify-center"
+              className="gap-2 dashboard-text hover:bg-white hover:text-black text-xs sm:text-sm w-full sm:w-auto justify-start sm:justify-center group border-dashboard-border bg-dashboard-card"
             >
               {compareEnabled ? (
-                <ToggleRight className="h-3 w-3 sm:h-4 sm:w-4 text-dashboard-accent" />
+                <ToggleRight className="h-3 w-3 sm:h-4 sm:w-4 text-dashboard-accent group-hover:text-black" />
               ) : (
-                <ToggleLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                <ToggleLeft className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-black" />
               )}
               <span className="truncate">Compare to previous period</span>
             </Button>
